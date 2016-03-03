@@ -1,4 +1,4 @@
-package AppPackage;
+package AppPackage.Entities;
 
 /**
  * Seems to be Singleton for current user

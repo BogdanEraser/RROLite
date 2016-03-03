@@ -1,8 +1,8 @@
 package AppPackage.Controllers;
 
-import AppPackage.CurrentUser;
+import AppPackage.Entities.CurrentUser;
+import AppPackage.Entities.User;
 import AppPackage.MainApp;
-import AppPackage.User;
 import AppPackage.Utils.ExcelUtils;
 import javafx.application.Platform;
 import javafx.event.Event;
@@ -32,7 +32,7 @@ public class LoginFormController //implements Initializable
     private MainApp mainApp;
     private ArrayList<User> userArrayList;
     @FXML
-    private AnchorPane LoginForm;
+    private AnchorPane loginForm;
     @FXML
     private Button btn1;
     @FXML
@@ -92,7 +92,8 @@ public class LoginFormController //implements Initializable
     @FXML
     public void initialize() {
         //textField.getProperties().put("vkType", "numeric");
-        log.debug("Initialising LoginForm");
+        log.debug("Initialising loginForm");
+        //получение данных о логинах и паролях из файла экселя
         String excelFilePath = "D:\\Java\\rro-soft.xlsx";
         Workbook workbook = ExcelUtils.getWorkbookFromExcelFile(excelFilePath);  //получаем книгу экселя
         String sheetName = "access";
@@ -324,7 +325,6 @@ public class LoginFormController //implements Initializable
                         fxmlLoader.setLocation(MainApp.class.getResource(fxmlFormPath));
                         log.debug("Setting location from FXML - MainFrom");
                         BorderPane mainPane = fxmlLoader.load();
-                        log.debug("fxmlLoader.load()");
                         log.debug("Отображаем главную форму");
                         // Set MainForm into the center of root layout.
                         mainApp.rootLayout.setCenter(mainPane);
@@ -332,7 +332,7 @@ public class LoginFormController //implements Initializable
                         MainFormController mainFormController = fxmlLoader.getController();
                         mainFormController.setMainApp(this.mainApp);
                     } catch (IOException e) {
-                        log.debug("Ошибка загрузки главной формы");
+                        log.debug("Ошибка загрузки главной формы" + e.toString());
                         e.printStackTrace();
                     }
                 }
@@ -352,50 +352,6 @@ public class LoginFormController //implements Initializable
             alert.setHeaderText("Ничего не введено");
             alert.setContentText("Пожалуйста, набирайте внимательнее");
             alert.showAndWait();
-        }
-    }
-
-
-    /**
-     * показываем лэйаут с формой логина внутри корневого лэйаута
-     */
-    public void setBtnOK(Event event) {
-
-        try {
-            String fxmlFormPath = "/fxml/MainForm/MainForm.fxml";
-            log.debug("Loading MainnForm for main view into RootLayout");
-            FXMLLoader fxmlLoader = new FXMLLoader();
-            fxmlLoader.setLocation(MainApp.class.getResource(fxmlFormPath));
-            AnchorPane mainPane = fxmlLoader.load();
-            log.debug("Отображаем главную форму");
-            // Set MainForm into the center of root layout.
-            mainApp.rootLayout.setCenter(mainPane);
-            // Give the controller access to the main app.
-            MainFormController mainFormController = fxmlLoader.getController();
-            mainFormController.setLblMessage("Привет " + logintextbox.getText());
-            mainFormController.setMainApp(this.mainApp);
-
-        } catch (IOException e) {
-            log.debug("Ошибка загрузки главной формы");
-            e.printStackTrace();
-        }
-    }
-
-
-    public void checklogin(Event event) {
-        String logintextboxText = logintextbox.getText();
-        StringBuilder builder = new StringBuilder();
-
-        if (!StringUtils.isEmpty(logintextboxText)) {
-            builder.append(logintextboxText);
-        }
-
-        if (builder.length() > 0) {
-            log.debug("Saying hello to " + builder.toString());
-            messagelabel.setText("Привет, " + builder.toString());
-        } else {
-            log.debug("Neither first name nor last name was set, saying hello to anonymous person");
-            messagelabel.setText("Кто здесь?");
         }
     }
 
@@ -419,11 +375,11 @@ public class LoginFormController //implements Initializable
                 btn.setText("Кнопка очищения");
                 btn.setOnAction(innerEvent -> {
                     log.debug("очищаем кнопки ");
-                    int chldQty = LoginForm.getChildren().size();
+                    int chldQty = loginForm.getChildren().size();
                     for (String aBtnArrayList : btnArrayList) {
                         for (int j = 0; j <= chldQty; j++) {
-                            if (aBtnArrayList.equals(LoginForm.getChildren().get(j).getId())) {
-                                LoginForm.getChildren().remove(j);
+                            if (aBtnArrayList.equals(loginForm.getChildren().get(j).getId())) {
+                                loginForm.getChildren().remove(j);
                                 break;
                             }
                         }
@@ -433,7 +389,7 @@ public class LoginFormController //implements Initializable
             }
             btn.setLayoutX(20);
             btn.setLayoutY(20 + i);
-            LoginForm.getChildren().add(btn);
+            loginForm.getChildren().add(btn);
             btnArrayList.add(btn.getId());
             i = i + 30;
             messagelabel.setText("Создаю кнопку " + stringBuilder.toString());

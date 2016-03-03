@@ -1,6 +1,8 @@
 package AppPackage;
 
 import AppPackage.Controllers.LoginFormController;
+import AppPackage.Entities.Goods;
+import AppPackage.Entities.GoodsGroup;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -10,11 +12,14 @@ import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class MainApp extends Application {
     private static final Logger log = Logger.getLogger(MainApp.class);
     private static boolean isRROLogEnabled;
     public BorderPane rootLayout;
+    public ArrayList<Goods> selectedGoodsArrayList;
+    public ArrayList<GoodsGroup> goodsGroupArrayList;
     private Stage MainStage;
 
     /**

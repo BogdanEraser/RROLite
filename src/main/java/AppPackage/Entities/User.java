@@ -1,4 +1,4 @@
-package AppPackage;
+package AppPackage.Entities;
 
 /**
  * Created by Eraser on 29.02.2016.
