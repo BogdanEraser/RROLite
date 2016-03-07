@@ -1,10 +1,10 @@
 package AppPackage.Controllers;
 
 import AppPackage.Entities.Goods;
+import AppPackage.Entities.GoodsInCheck;
 import AppPackage.MainApp;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.layout.BorderPane;
@@ -13,6 +13,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import org.apache.log4j.Logger;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 
@@ -24,7 +25,6 @@ public class GoodsFormController //implements Initializable
     private MainApp mainApp;
     private static int selectedGroup;
     private ArrayList<Goods> goodsInSelectedGroup;
-    //ObservableList<Goods> selectedGoodsObservableList = FXCollections.observableArrayList(mainApp.allGoodsArrayList);
 
     @FXML
     private BorderPane GoodsForm;
@@ -88,11 +88,12 @@ public class GoodsFormController //implements Initializable
             final int finalI = i;
             btn.setOnAction(innerEvent -> {
                 log.debug("нажали кнопку " + goodsInSelectedGroup.get(finalI).getName());
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.initOwner(mainApp.getMainStage());
-                alert.setTitle("COOL");
-                alert.setHeaderText("нажали кнопку " + goodsInSelectedGroup.get(finalI).getName());
-                alert.showAndWait();
+
+                GoodsInCheck goodsInCheck = new GoodsInCheck(goodsInSelectedGroup.get(finalI),new BigDecimal(2),new BigDecimal(2).multiply(new BigDecimal(3)));
+                OrderFormController.getGoodsInCheckObservableList().add(goodsInCheck);
+
+                mainApp.rootLayout.setCenter(OrderFormController.getRootPane());
+
             });
             btn.setPrefWidth(250);
             btn.setPrefHeight(100);
@@ -104,7 +105,9 @@ public class GoodsFormController //implements Initializable
             if ((row != 0) && (row % 6 == 0)) {
                 col = col + 1;
                 row = 0;
-            } else {row++;}
+            } else {
+                row++;
+            }
         }
         log.debug("Создаю кнопку возврата");
         Button btn = new Button();
