@@ -18,8 +18,8 @@ public class MainApp extends Application {
     private static final Logger log = Logger.getLogger(MainApp.class);
     private static boolean isRROLogEnabled;
     public BorderPane rootLayout;
-    public ArrayList<Goods> selectedGoodsArrayList;
-    public ArrayList<GoodsGroup> goodsGroupArrayList;
+    public ArrayList<Goods> allGoodsArrayList;
+    public ArrayList<GoodsGroup> allGoodsGroupsArrayList;
     private Stage MainStage;
 
     /**

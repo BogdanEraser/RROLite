@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ResourceBundleManager">
+    <file url="file://$PROJECT_DIR$/src/main/resources/fxml/GoodsForm/GoodsForm_en.properties" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/fxml/GoodsForm/GoodsForm_ru.properties" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/fxml/GoodsForm/GoodsForm_ua.properties" />
     <file url="file://$PROJECT_DIR$/src/main/resources/fxml/LoginForm/LoginForm_en.properties" />
     <file url="file://$PROJECT_DIR$/src/main/resources/fxml/LoginForm/LoginForm_ru.properties" />
     <file url="file://$PROJECT_DIR$/src/main/resources/fxml/LoginForm/LoginForm_ua.properties" />
@@ -18,6 +21,12 @@
       <file value="file://$PROJECT_DIR$/src/main/resources/fxml/MainForm/MainForm_ru.properties" />
       <file value="file://$PROJECT_DIR$/src/main/resources/fxml/MainForm/MainForm_ua.properties" />
       <base-name>MainForm</base-name>
+    </custom-resource-bundle>
+    <custom-resource-bundle>
+      <file value="file://$PROJECT_DIR$/src/main/resources/fxml/GoodsForm/GoodsForm_en.properties" />
+      <file value="file://$PROJECT_DIR$/src/main/resources/fxml/GoodsForm/GoodsForm_ru.properties" />
+      <file value="file://$PROJECT_DIR$/src/main/resources/fxml/GoodsForm/GoodsForm_ua.properties" />
+      <base-name>GoodsForm</base-name>
     </custom-resource-bundle>
   </component>
 </project>

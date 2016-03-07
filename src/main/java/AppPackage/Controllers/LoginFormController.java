@@ -5,16 +5,16 @@ import AppPackage.Entities.User;
 import AppPackage.MainApp;
 import AppPackage.Utils.ExcelUtils;
 import javafx.application.Platform;
-import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.*;
 
 import java.io.IOException;
@@ -61,16 +61,6 @@ public class LoginFormController //implements Initializable
     private Button btnBackSpace;
     @FXML
     private TextField txtPassword;
-    @FXML
-    private TextField logintextbox;
-    @FXML
-    private Label messagelabel;
-    @FXML
-    private Button addbutton;
-    @FXML
-    private Button btnOK;
-    @FXML
-    private TextField textField;
     private ResourceBundle bundle;
 
     public LoginFormController() {
@@ -330,6 +320,7 @@ public class LoginFormController //implements Initializable
                         mainApp.rootLayout.setCenter(mainPane);
                         // Give the controller access to the main app.
                         MainFormController mainFormController = fxmlLoader.getController();
+                        MainFormController.setRootPane(mainPane);
                         mainFormController.setMainApp(this.mainApp);
                     } catch (IOException e) {
                         log.debug("Ошибка загрузки главной формы" + e.toString());
@@ -354,7 +345,7 @@ public class LoginFormController //implements Initializable
             alert.showAndWait();
         }
     }
-
+/*
     public void setAddbutton(Event event) {
         String logintextboxText = logintextbox.getText();
         StringBuilder stringBuilder = new StringBuilder();
@@ -398,5 +389,5 @@ public class LoginFormController //implements Initializable
             messagelabel.setText("пусто название для кнопки недопустимо");
         }
     }
-
+*/
 }

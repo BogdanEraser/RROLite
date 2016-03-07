@@ -1,13 +1,14 @@
 package AppPackage.Controllers;
 
-import AppPackage.Entities.CurrentUser;
+import AppPackage.Entities.Goods;
 import AppPackage.MainApp;
 import AppPackage.RRO.CurrentRRO;
 import AppPackage.Utils.CheckInternetConnnection;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
@@ -18,37 +19,41 @@ import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 
 public class OrderFormController //implements Initializable
 {
     private static final Logger log = Logger.getLogger(OrderFormController.class);
-    private LocalTime currentTime;
     private Scene scene;
-    private MainApp mainApp;
+    private static MainApp mainApp;
     private Timeline everySecond;
+    public ObservableList<Goods> goodsObservableList;
+
     @FXML
-    private BorderPane orderForm;
+    private static BorderPane OrderForm;
     @FXML
     private GridPane buttonsGridPane;
-    @FXML
-    private Label lblTime;
-    @FXML
-    private Label lblMessage;
     @FXML
     private Label lblRROSumCash;
     @FXML
     private Label lblRROSumCredit;
     @FXML
-    private Button btnExit;
+    private Button btnBack;
     @FXML
     private ImageView ConnectedIcon;
     @FXML
     private ImageView NotConnectedIcon;
+    @FXML
+    private TableView<Goods> checkTableView;
+    @FXML
+    private TableColumn<Goods, String> goodsNameColumn;
+    @FXML
+    private TableColumn<Goods, BigDecimal> goodsPriceColumn;
+
     private ResourceBundle bundle;
 
     public OrderFormController() {
@@ -60,22 +65,30 @@ public class OrderFormController //implements Initializable
      * @param mainApp
      */
     public void setMainApp(MainApp mainApp) {
-        this.mainApp = mainApp;
+        OrderFormController.mainApp = mainApp;
+    }
+
+    public static MainApp getMainApp() {
+        return mainApp;
     }
 
     public void setScene(Scene scene) {
         this.scene = scene;
     }
 
+    public static BorderPane getRootPane() {
+        return OrderForm;
+    }
+
+    public static void setRootPane(BorderPane orderForm) {
+        OrderForm = orderForm;
+    }
 
     @FXML
     public void initialize() {
         log.debug("Initialising MainForm");
         lblRROSumCash.setText("Сумма оплат наличными: " + CurrentRRO.getInstance((byte) 1, "7", "115200").getCashInRRO());
         lblRROSumCredit.setText("Сумма оплат кредитной картой: " + CurrentRRO.getInstance((byte) 1, "7", "115200").getCreditInRRO());
-        lblMessage.setText("Пользователь: " + CurrentUser.getInstance().getName());
-        currentTime = LocalTime.now();
-        lblTime.setText("Сейчас: " + currentTime.truncatedTo(ChronoUnit.SECONDS).toString());
         if (CheckInternetConnnection.getInstance().isConnected()) {
             ConnectedIcon.setVisible(true);
             NotConnectedIcon.setVisible(false);
@@ -85,9 +98,7 @@ public class OrderFormController //implements Initializable
         }
 
         everySecond = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
-            currentTime = LocalTime.now();
-            lblTime.setText("Сейчас: " + currentTime.truncatedTo(ChronoUnit.SECONDS).toString());
-            if (currentTime.getSecond() % 10 == 0) { //каждые 10 секунд проверяем наличие интернет-соединения
+            if (LocalTime.now().getSecond() % 10 == 0) { //каждые 10 секунд проверяем наличие интернет-соединения
                 if (CheckInternetConnnection.getInstance().isConnected()) {
                     ConnectedIcon.setVisible(true);
                     NotConnectedIcon.setVisible(false);
@@ -102,21 +113,43 @@ public class OrderFormController //implements Initializable
 
         setMainApp(MainFormController.getMainApp());
         //расставим кнопки согласно списку групп
-        for (int i = 0; i < mainApp.goodsGroupArrayList.size(); i++) {
-            log.debug("Создаю кнопку группы для группы: " + mainApp.goodsGroupArrayList.get(i).getName());
+        for (int i = 0; i < mainApp.allGoodsGroupsArrayList.size(); i++) {
+            log.debug("Создаю кнопку группы для группы: " + mainApp.allGoodsGroupsArrayList.get(i).getName());
             Button btn = new Button();
-            btn.setText(mainApp.goodsGroupArrayList.get(i).getName());
-            btn.setId(btn.hashCode() + mainApp.goodsGroupArrayList.get(i).getName());
+            btn.setText(mainApp.allGoodsGroupsArrayList.get(i).getName());
+            btn.setId(btn.hashCode() + mainApp.allGoodsGroupsArrayList.get(i).getName());
             final int finalI = i;
             btn.setOnAction(innerEvent -> {
-                log.debug("нажали кнопку " + mainApp.goodsGroupArrayList.get(finalI).getName());
+                log.debug("нажали кнопку " + mainApp.allGoodsGroupsArrayList.get(finalI).getName());
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.initOwner(mainApp.getMainStage());
                 alert.setTitle("COOL");
-                alert.setHeaderText("нажали кнопку " + mainApp.goodsGroupArrayList.get(finalI).getName());
+                alert.setHeaderText("нажали кнопку " + mainApp.allGoodsGroupsArrayList.get(finalI).getName());
                 alert.showAndWait();
+
+                GoodsFormController.setSelectedGroup(mainApp.allGoodsGroupsArrayList.get(finalI).getCode());
+
+                try {
+                    String fxmlFormPath = "/fxml/GoodsForm/GoodsForm.fxml";
+                    log.debug("Loading GroupForm for selecting goods into RootLayout");
+                    FXMLLoader fxmlLoader = new FXMLLoader();
+                    fxmlLoader.setLocation(MainApp.class.getResource(fxmlFormPath));
+                    log.debug("Setting location from FXML - GoodsForm");
+                    BorderPane goodsPane = fxmlLoader.load();
+                    log.debug("Отображаем форму выбора товаров");
+                    // Set GoodsForm into the center of root layout.
+                    mainApp.rootLayout.setCenter(goodsPane);
+                    // Give the controller access to the main app.
+                    GoodsFormController goodsFormController = fxmlLoader.getController();
+                    goodsFormController.setRootPane(goodsPane);
+                    goodsFormController.setMainApp(mainApp);
+                } catch (IOException e) {
+                    log.debug("Ошибка загрузки формы выбора товаров " + e.toString());
+                    e.printStackTrace();
+                }
+
             });
-            btn.setPrefWidth(300);
+            btn.setPrefWidth(280);
             btn.setPrefHeight(80);
             btn.setFont(Font.font("Verdana", 20));
             btn.setWrapText(true);
@@ -128,18 +161,27 @@ public class OrderFormController //implements Initializable
                 buttonsGridPane.add(btn, 1, i - 10);
             }
         }
+
+            /* WITHOUT LAMBDA
+        nameColumn = new TableColumn<Tovar,String>("Наименование");
+        nameColumn.setCellValueFactory(new PropertyValueFactory<Tovar,String>("name"));
+        priceColumn = new TableColumn<Tovar,BigDecimal>("Цена");
+        priceColumn.setCellValueFactory(new PropertyValueFactory<Tovar,BigDecimal>("price"));
+        */
+
+       // goodsNameColumn.setCellValueFactory(new Cell<Goods,String>(goodsObservableList.get(i).getName()));
+        //goodsNameColumn.setCellValueFactory(cellData -> cellData.getValue().getName());
+        //goodsPriceColumn.setCellValueFactory(cellData -> cellData.getValue().getPrice());
+
+        // Listen for selection changes and show the tovar details when changed.
+        //checkTableView.getSelectionModel().selectedItemProperty().addListener(
+        //        (observable, oldValue, newValue) -> showTovarDetails(newValue));
+
+
     }
 
-    public void setExitButton() {
-        Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
-        alertQuestion.initOwner(mainApp.getMainStage());
-        alertQuestion.setTitle("Уточнение");
-        alertQuestion.setHeaderText("Вы действительно хотите выйти?");
-        Optional<ButtonType> result = alertQuestion.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
-            Platform.exit();
-            System.exit(0);
-        }
+    public void setBackButton() {
+        mainApp.rootLayout.setCenter(MainFormController.getRootPane());
     }
 
 }
