@@ -9,6 +9,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 
+import java.math.BigDecimal;
 import java.util.ResourceBundle;
 
 
@@ -87,7 +88,9 @@ public class QtyInputFormController //implements Initializable
         if (txtValue.getText().length() < 8) {
             if (txtValue.getText().length() == 0) {
                 txtValue.setText("1");
-            } else txtValue.setText(txtValue.getText() + "1");
+            } else if (!txtValue.getText().equals("0")) {
+                txtValue.setText(txtValue.getText() + "1");
+            }
         }
     }
 
@@ -98,7 +101,9 @@ public class QtyInputFormController //implements Initializable
         if (txtValue.getText().length() < 8) {
             if (txtValue.getText().length() == 0) {
                 txtValue.setText("2");
-            } else txtValue.setText(txtValue.getText() + "2");
+            } else if (!txtValue.getText().equals("0")) {
+                txtValue.setText(txtValue.getText() + "2");
+            }
         }
     }
 
@@ -109,7 +114,9 @@ public class QtyInputFormController //implements Initializable
         if (txtValue.getText().length() < 8) {
             if (txtValue.getText().length() == 0) {
                 txtValue.setText("3");
-            } else txtValue.setText(txtValue.getText() + "3");
+            } else if (!txtValue.getText().equals("0")) {
+                txtValue.setText(txtValue.getText() + "3");
+            }
         }
     }
 
@@ -120,7 +127,9 @@ public class QtyInputFormController //implements Initializable
         if (txtValue.getText().length() < 8) {
             if (txtValue.getText().length() == 0) {
                 txtValue.setText("4");
-            } else txtValue.setText(txtValue.getText() + "4");
+            } else if (!txtValue.getText().equals("0")) {
+                txtValue.setText(txtValue.getText() + "4");
+            }
         }
     }
 
@@ -131,7 +140,9 @@ public class QtyInputFormController //implements Initializable
         if (txtValue.getText().length() < 8) {
             if (txtValue.getText().length() == 0) {
                 txtValue.setText("5");
-            } else txtValue.setText(txtValue.getText() + "5");
+            } else if (!txtValue.getText().equals("0")) {
+                txtValue.setText(txtValue.getText() + "5");
+            }
         }
     }
 
@@ -142,7 +153,9 @@ public class QtyInputFormController //implements Initializable
         if (txtValue.getText().length() < 8) {
             if (txtValue.getText().length() == 0) {
                 txtValue.setText("6");
-            } else txtValue.setText(txtValue.getText() + "6");
+            } else if (!txtValue.getText().equals("0")) {
+                txtValue.setText(txtValue.getText() + "6");
+            }
         }
     }
 
@@ -153,7 +166,9 @@ public class QtyInputFormController //implements Initializable
         if (txtValue.getText().length() < 8) {
             if (txtValue.getText().length() == 0) {
                 txtValue.setText("7");
-            } else txtValue.setText(txtValue.getText() + "7");
+            } else if (!txtValue.getText().equals("0")) {
+                txtValue.setText(txtValue.getText() + "7");
+            }
         }
     }
 
@@ -164,7 +179,9 @@ public class QtyInputFormController //implements Initializable
         if (txtValue.getText().length() < 8) {
             if (txtValue.getText().length() == 0) {
                 txtValue.setText("8");
-            } else txtValue.setText(txtValue.getText() + "8");
+            } else if (!txtValue.getText().equals("0")) {
+                txtValue.setText(txtValue.getText() + "8");
+            }
         }
     }
 
@@ -175,7 +192,9 @@ public class QtyInputFormController //implements Initializable
         if (txtValue.getText().length() < 8) {
             if (txtValue.getText().length() == 0) {
                 txtValue.setText("9");
-            } else txtValue.setText(txtValue.getText() + "9");
+            } else if (!txtValue.getText().equals("0")) {
+                txtValue.setText(txtValue.getText() + "9");
+            }
         }
     }
 
@@ -186,7 +205,9 @@ public class QtyInputFormController //implements Initializable
         if (txtValue.getText().length() < 8) {
             if (txtValue.getText().length() == 0) {
                 txtValue.setText("0");
-            } else txtValue.setText(txtValue.getText() + "0");
+            } else if (!txtValue.getText().equals("0")) {
+                txtValue.setText(txtValue.getText() + "0");
+            }
         }
     }
 
@@ -216,6 +237,9 @@ public class QtyInputFormController //implements Initializable
      * нажатие кнопки "Отмена"
      */
     public void setBtnCancel() {
+        GoodsFormController.setQuantity(new BigDecimal(0));
+        Stage stage = (Stage) btnCancel.getScene().getWindow();
+        stage.close();
     }
 
     /**
@@ -223,6 +247,9 @@ public class QtyInputFormController //implements Initializable
      */
     public void setBtnOK() {
         if (txtValue.getText().length() != 0) {
+            GoodsFormController.setQuantity(new BigDecimal(txtValue.getText().replace(",",".")));
+            Stage stage = (Stage) btnOK.getScene().getWindow();
+            stage.close();
         }
     }
 }

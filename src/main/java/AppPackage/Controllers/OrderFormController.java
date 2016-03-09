@@ -173,9 +173,10 @@ public class OrderFormController //implements Initializable
         goodsPriceColumn = new TableColumn<GoodsInCheck,BigDecimal>();
         goodsPriceColumn.setCellValueFactory(new PropertyValueFactory<GoodsInCheck,BigDecimal>("price"));
         */
-        String tblColStyle = "-fx-alignment: CENTER-LEFT; -fx-font-size: 22; -fx-font-weight: bold";
+
         goodsNameColumn.setCellValueFactory(cellData -> cellData.getValue().getGoods().nameProperty());
-        goodsNameColumn.setStyle(tblColStyle);
+        goodsNameColumn.setStyle("-fx-alignment: CENTER-LEFT; -fx-font-size: 21; -fx-font-weight: bold");
+        String tblColStyle = "-fx-alignment: CENTER-RIGHT; -fx-font-size: 21; -fx-font-weight: bold";
         goodsPriceColumn.setCellValueFactory(cellData -> cellData.getValue().getGoods().priceProperty());
         goodsPriceColumn.setStyle(tblColStyle);
         goodsQtyColumn.setCellValueFactory(cellData -> cellData.getValue().quantityProperty());

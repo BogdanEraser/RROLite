@@ -33,6 +33,7 @@ public class GoodsFormController //implements Initializable
     private static MainApp mainApp;
     private static int selectedGroup;
     private ArrayList<Goods> goodsInSelectedGroup;
+    private static BigDecimal quantity = new BigDecimal(2);
 
     @FXML
     private BorderPane GoodsForm;
@@ -66,6 +67,14 @@ public class GoodsFormController //implements Initializable
 
     public static MainApp getMainApp() {
         return mainApp;
+    }
+
+    public static BigDecimal getQuantity() {
+        return quantity;
+    }
+
+    public static void setQuantity(BigDecimal quantity) {
+        GoodsFormController.quantity = quantity;
     }
 
     @FXML
@@ -106,8 +115,16 @@ public class GoodsFormController //implements Initializable
                     stage.setTitle(goodsInSelectedGroup.get(finalI).getName());
                     stage.initModality(Modality.APPLICATION_MODAL);
                     stage.setResizable(false);
-                    stage.initStyle(StageStyle.UNDECORATED);
+                    //stage.initStyle(StageStyle.UNDECORATED);
                     stage.initOwner(btn.getScene().getWindow());
+                    stage.initStyle(StageStyle.UTILITY);
+                    stage.setOnCloseRequest(we -> {
+                        we.consume();
+                        log.debug("QtyInputForm stage is closing");
+                    });
+                    // Give the controller access to the main app.
+                    QtyInputFormController qtyInputFormController = fxmlLoader.getController();
+                    qtyInputFormController.setMainApp(mainApp);
                     stage.showAndWait();
 
                 } catch (IOException e) {
@@ -115,12 +132,6 @@ public class GoodsFormController //implements Initializable
                     e.printStackTrace();
                 }
 
-
-
-
-
-
-                BigDecimal quantity = new BigDecimal(2);
                 BigDecimal summary = new BigDecimal(goodsInSelectedGroup.get(finalI).getPrice().getValue().toString()).multiply(quantity);
 
                 //OrderFormController.getGoodsInCheckObservableList().add(new GoodsInCheck(goodsInSelectedGroup.get(finalI),quantity,summary));
