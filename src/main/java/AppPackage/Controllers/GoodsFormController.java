@@ -4,6 +4,8 @@ import AppPackage.Entities.Goods;
 import AppPackage.Entities.GoodsInCheck;
 import AppPackage.MainApp;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.OverrunStyle;
@@ -11,8 +13,12 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
@@ -22,7 +28,9 @@ public class GoodsFormController //implements Initializable
 {
     private static final Logger log = Logger.getLogger(OrderFormController.class);
     private Scene scene;
-    private MainApp mainApp;
+    private Stage stage;
+    private Parent root;
+    private static MainApp mainApp;
     private static int selectedGroup;
     private ArrayList<Goods> goodsInSelectedGroup;
 
@@ -52,19 +60,13 @@ public class GoodsFormController //implements Initializable
         GoodsForm = goodsForm;
     }
 
-    /**
-     * Is called by the main application to give a reference back to itself.
-     *
-     * @param mainApp
-     */
-    public void setMainApp(MainApp mainApp) {
-        this.mainApp = mainApp;
+      public void setMainApp(MainApp mainApp) {
+        GoodsFormController.mainApp = mainApp;
     }
 
-    public void setScene(Scene scene) {
-        this.scene = scene;
+    public static MainApp getMainApp() {
+        return mainApp;
     }
-
 
     @FXML
     public void initialize() {
@@ -89,19 +91,69 @@ public class GoodsFormController //implements Initializable
             btn.setOnAction(innerEvent -> {
                 log.debug("нажали кнопку " + goodsInSelectedGroup.get(finalI).getName());
 
-                GoodsInCheck goodsInCheck = new GoodsInCheck(goodsInSelectedGroup.get(finalI),new BigDecimal(2),new BigDecimal(2).multiply(new BigDecimal(3)));
-                OrderFormController.getGoodsInCheckObservableList().add(goodsInCheck);
+                //покажем форму ввода количества товара
+                try {
+                    stage = new Stage();
+                    String fxmlFormPath = "/fxml/QtyInputForm/QtyInputForm.fxml";
+                    log.debug("Loading QtyInputForm for input quantity of goods into RootLayout");
+                    FXMLLoader fxmlLoader = new FXMLLoader();
+                    fxmlLoader.setLocation(MainApp.class.getResource(fxmlFormPath));
+                    log.debug("Setting location from FXML - QtyInputForm");
+                    //BorderPane qtyInputPane = fxmlLoader.load();
+                    root = fxmlLoader.load();
+                    log.debug("ќтображаем форму выбора товаров");
+                    stage.setScene(new Scene(root,640,500));
+                    stage.setTitle(goodsInSelectedGroup.get(finalI).getName());
+                    stage.initModality(Modality.APPLICATION_MODAL);
+                    stage.setResizable(false);
+                    stage.initStyle(StageStyle.UNDECORATED);
+                    stage.initOwner(btn.getScene().getWindow());
+                    stage.showAndWait();
 
+                } catch (IOException e) {
+                    log.debug("ќшибка загрузки формы ввода количества товара " + e.toString());
+                    e.printStackTrace();
+                }
+
+
+
+
+
+
+                BigDecimal quantity = new BigDecimal(2);
+                BigDecimal summary = new BigDecimal(goodsInSelectedGroup.get(finalI).getPrice().getValue().toString()).multiply(quantity);
+
+                //OrderFormController.getGoodsInCheckObservableList().add(new GoodsInCheck(goodsInSelectedGroup.get(finalI),quantity,summary));
+                if (MainApp.getGoodsInCheckObservableList().size() == 0) { //заказ пуст, добавл€ем первый товар в чек
+                    MainApp.getGoodsInCheckObservableList().add(new GoodsInCheck(goodsInSelectedGroup.get(finalI), quantity, summary));
+                } else {
+                    boolean isGoodsFound = false;  //заказ не пуст, ищем такой же товар
+                    for (int j = 0; j < MainApp.getGoodsInCheckObservableList().size(); j++) {
+                        if (MainApp.getGoodsInCheckObservableList().get(j).getGoods().getCode() == goodsInSelectedGroup.get(finalI).getCode()) { //товар найден, измен€ем количество
+                            BigDecimal localQty = new BigDecimal(MainApp.getGoodsInCheckObservableList().get(j).quantityProperty().getValue().toString()).add(quantity);
+                            BigDecimal localSummary = new BigDecimal(goodsInSelectedGroup.get(finalI).getPrice().getValue().toString()).multiply(localQty);
+                            MainApp.getGoodsInCheckObservableList().get(j).setQuantity(localQty);
+                            MainApp.getGoodsInCheckObservableList().get(j).setSummaryOnGoods(localSummary);
+                            isGoodsFound = true;
+                            break;
+                        }
+                    }
+                    if (!isGoodsFound) { //товар не найден, добавл€ем новый товар
+                        MainApp.getGoodsInCheckObservableList().add(new GoodsInCheck(goodsInSelectedGroup.get(finalI), quantity, summary));
+                            }
+                }
+                MainApp.checkSummaryProperty().setValue(new BigDecimal(OrderFormController.getGlobalSumOnCheck().toString()));
                 mainApp.rootLayout.setCenter(OrderFormController.getRootPane());
 
             });
             btn.setPrefWidth(250);
-            btn.setPrefHeight(100);
+            btn.setPrefHeight(110);
             btn.setFont(Font.font("Verdana", 20));
             btn.setWrapText(true);
             btn.setTextOverrun(OverrunStyle.CLIP);
             btn.setTextAlignment(TextAlignment.CENTER);
             buttonsGridPane.add(btn, col, row);
+
             if ((row != 0) && (row % 6 == 0)) {
                 col = col + 1;
                 row = 0;
@@ -117,7 +169,7 @@ public class GoodsFormController //implements Initializable
             mainApp.rootLayout.setCenter(OrderFormController.getRootPane());
         });
         btn.setPrefWidth(250);
-        btn.setPrefHeight(100);
+        btn.setPrefHeight(110);
         btn.setFont(Font.font("Verdana", 22));
         btn.setWrapText(true);
         btn.setTextOverrun(OverrunStyle.CLIP);

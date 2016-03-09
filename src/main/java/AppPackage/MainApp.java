@@ -3,7 +3,12 @@ package AppPackage;
 import AppPackage.Controllers.LoginFormController;
 import AppPackage.Entities.Goods;
 import AppPackage.Entities.GoodsGroup;
+import AppPackage.Entities.GoodsInCheck;
 import javafx.application.Application;
+import javafx.beans.Observable;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -12,6 +17,7 @@ import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 
 public class MainApp extends Application {
@@ -20,6 +26,8 @@ public class MainApp extends Application {
     public BorderPane rootLayout;
     public ArrayList<Goods> allGoodsArrayList;
     public ArrayList<GoodsGroup> allGoodsGroupsArrayList;
+    public static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList(goodsInCheckQTY -> new Observable[] {goodsInCheckQTY.quantityProperty()} );
+    private static SimpleObjectProperty checkSummary;
     private Stage MainStage;
 
     /**
@@ -37,7 +45,31 @@ public class MainApp extends Application {
                 setRROLogEnabled(true);
             }
         }
+
+        checkSummary = new SimpleObjectProperty<BigDecimal>(new BigDecimal(0));
+
         launch(args);
+    }
+
+    public static ObservableList<GoodsInCheck> getGoodsInCheckObservableList() {
+        return goodsInCheckObservableList;
+    }
+
+    public static void setGoodsInCheckObservableList(ObservableList<GoodsInCheck> goodsInCheckObservableList) {
+        MainApp.goodsInCheckObservableList = goodsInCheckObservableList;
+    }
+
+
+    public static Object getCheckSummary() {
+        return checkSummary.get();
+    }
+
+    public static SimpleObjectProperty checkSummaryProperty() {
+        return checkSummary;
+    }
+
+    public void setCheckSummary(Object checkSummary) {
+        MainApp.checkSummary.set(checkSummary);
     }
 
     public static boolean isRROLogEnabled() {

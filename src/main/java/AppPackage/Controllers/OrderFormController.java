@@ -6,9 +6,6 @@ import AppPackage.RRO.CurrentRRO;
 import AppPackage.Utils.CheckInternetConnnection;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -32,7 +29,6 @@ public class OrderFormController //implements Initializable
     private static final Logger log = Logger.getLogger(OrderFormController.class);
     private Scene scene;
     private static MainApp mainApp;
-    public static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList();
 
     @FXML
     private static BorderPane OrderForm;
@@ -62,6 +58,7 @@ public class OrderFormController //implements Initializable
     private ResourceBundle bundle;
 
     public OrderFormController() {
+
     }
 
     /**
@@ -89,13 +86,6 @@ public class OrderFormController //implements Initializable
         OrderForm = orderForm;
     }
 
-    public static ObservableList<GoodsInCheck> getGoodsInCheckObservableList() {
-        return goodsInCheckObservableList;
-    }
-
-    public static void setGoodsInCheckObservableList(ObservableList<GoodsInCheck> goodsInCheckObservableList) {
-        OrderFormController.goodsInCheckObservableList = goodsInCheckObservableList;
-    }
 
     @FXML
     public void initialize() {
@@ -172,8 +162,10 @@ public class OrderFormController //implements Initializable
             globalSumOnCheck.setText(getGlobalSumOnCheck().toString());
         }
 
+        globalSumOnCheck.textProperty().bind(MainApp.checkSummaryProperty().asString());
+
         // Add observable list data to the table
-        checkTableView.setItems(goodsInCheckObservableList);
+        checkTableView.setItems(MainApp.getGoodsInCheckObservableList());
 
         /*WITHOUT LAMBDA
         goodsNameColumn = new TableColumn<GoodsInCheck,String>();
@@ -181,16 +173,21 @@ public class OrderFormController //implements Initializable
         goodsPriceColumn = new TableColumn<GoodsInCheck,BigDecimal>();
         goodsPriceColumn.setCellValueFactory(new PropertyValueFactory<GoodsInCheck,BigDecimal>("price"));
         */
+        String tblColStyle = "-fx-alignment: CENTER-LEFT; -fx-font-size: 22; -fx-font-weight: bold";
         goodsNameColumn.setCellValueFactory(cellData -> cellData.getValue().getGoods().nameProperty());
-        goodsNameColumn.setStyle("-fx-alignment: CENTER-LEFT; -fx-font-size: 22");
+        goodsNameColumn.setStyle(tblColStyle);
         goodsPriceColumn.setCellValueFactory(cellData -> cellData.getValue().getGoods().priceProperty());
-        goodsPriceColumn.setStyle("-fx-alignment: CENTER-RIGHT; -fx-font-size: 22");
+        goodsPriceColumn.setStyle(tblColStyle);
         goodsQtyColumn.setCellValueFactory(cellData -> cellData.getValue().quantityProperty());
-        goodsQtyColumn.setStyle("-fx-alignment: CENTER-RIGHT; -fx-font-size: 22");
+        goodsQtyColumn.setStyle(tblColStyle);
         goodsSummColumn.setCellValueFactory(cellData -> cellData.getValue().summaryOnGoodsProperty());
-        goodsSummColumn.setStyle("-fx-alignment: CENTER-RIGHT; -fx-font-size: 22");
+        goodsSummColumn.setStyle(tblColStyle);
 
-        goodsInCheckObservableList.addListener((ListChangeListener) change -> globalSumOnCheck.setText(getGlobalSumOnCheck().toString()));
+        //MainApp.getGoodsInCheckObservableList().addListener((ListChangeListener) change -> {
+        //    globalSumOnCheck.setText(getGlobalSumOnCheck().toString());
+        //});
+
+
 
 
         // Listen for selection changes and show the tovar details when changed.
@@ -206,8 +203,9 @@ public class OrderFormController //implements Initializable
 
     public static BigDecimal getGlobalSumOnCheck(){
         BigDecimal sumOnCheck = new BigDecimal(0);
-        for (GoodsInCheck aGoodsInCheckObservableList : goodsInCheckObservableList) {
-            sumOnCheck = sumOnCheck.add(new BigDecimal(aGoodsInCheckObservableList.getSummaryOnGoods().toString()));
+        for (GoodsInCheck entry : MainApp.getGoodsInCheckObservableList())
+        {
+            sumOnCheck = sumOnCheck.add(new BigDecimal(entry.getSummaryOnGoods().toString()));
         }
         return sumOnCheck;
     }

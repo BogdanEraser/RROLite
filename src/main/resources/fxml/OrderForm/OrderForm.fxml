@@ -10,26 +10,27 @@
    <bottom>
       <GridPane BorderPane.alignment="CENTER">
         <columnConstraints>
-          <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" />
-            <ColumnConstraints hgrow="SOMETIMES" maxWidth="366.0" minWidth="86.0" prefWidth="366.0" />
-            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="646.0" minWidth="300.0" prefWidth="462.0" />
-            <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
+          <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="400.0" />
+            <ColumnConstraints hgrow="SOMETIMES" />
+            <ColumnConstraints hgrow="SOMETIMES" />
+            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="130.0" />
+            <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="75.0" />
         </columnConstraints>
         <rowConstraints>
           <RowConstraints valignment="CENTER" vgrow="SOMETIMES" />
         </rowConstraints>
          <children>
-                <ImageView fx:id="ConnectedIcon" fitHeight="60.0" fitWidth="72.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="3">
+                <ImageView fx:id="ConnectedIcon" fitHeight="60.0" fitWidth="72.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="4">
                     <image>
                         <Image url="@../../images/connected.png" />
                     </image>
                 </ImageView>
-                <ImageView fx:id="NotConnectedIcon" fitHeight="60.0" fitWidth="72.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="3">
+                <ImageView fx:id="NotConnectedIcon" fitHeight="60.0" fitWidth="72.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="4">
                     <image>
                         <Image url="@../../images/notconnected.png" />
                     </image>
                 </ImageView>
-                <Button fx:id="btnBack" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#setBackButton" prefHeight="60.0" prefWidth="120.0" text="Главное меню" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" GridPane.columnIndex="2">
+                <Button fx:id="btnBack" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#setBackButton" prefHeight="60.0" prefWidth="120.0" text="Главное меню" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" GridPane.columnIndex="3">
                     <font>
                         <Font name="Verdana" size="18.0" />
                     </font>
@@ -120,14 +121,17 @@
                               <Font name="Verdana" size="20.0" />
                            </font>
                         </Label>
-                        <Label fx:id="globalSumOnCheck" text="Summarno" textAlignment="RIGHT" textOverrun="CLIP" GridPane.columnIndex="4">
+                        <Label fx:id="globalSumOnCheck" text="Summarno" textAlignment="RIGHT" textOverrun="CLIP" GridPane.columnIndex="4" GridPane.halignment="CENTER">
                            <font>
                               <Font name="Verdana Bold" size="20.0" />
                            </font>
+                           <GridPane.margin>
+                              <Insets />
+                           </GridPane.margin>
                         </Label>
                      </children>
                   </GridPane>
-                  <TableView id="checkTableView" fx:id="checkTableView" GridPane.rowIndex="1">
+                  <TableView id="checkTableView" fx:id="checkTableView" GridPane.hgrow="NEVER" GridPane.rowIndex="1">
                     <columns>
                       <TableColumn id="nameColumn" fx:id="goodsNameColumn" editable="false" minWidth="-1.0" prefWidth="450.0" resizable="false" sortable="false" text="Наименование" />
                       <TableColumn id="priceColumn" fx:id="goodsPriceColumn" editable="false" minWidth="-1.0" prefWidth="100.0" resizable="false" sortable="false" text="Цена" />
