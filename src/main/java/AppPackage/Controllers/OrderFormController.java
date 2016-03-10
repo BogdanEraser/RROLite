@@ -4,8 +4,10 @@ import AppPackage.Entities.GoodsInCheck;
 import AppPackage.MainApp;
 import AppPackage.RRO.CurrentRRO;
 import AppPackage.Utils.CheckInternetConnnection;
+import com.sun.javafx.scene.control.skin.TableHeaderRow;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -27,8 +29,8 @@ import java.util.ResourceBundle;
 public class OrderFormController //implements Initializable
 {
     private static final Logger log = Logger.getLogger(OrderFormController.class);
-    private Scene scene;
     private static MainApp mainApp;
+    private Scene scene;
 
     @FXML
     private static BorderPane OrderForm;
@@ -54,6 +56,8 @@ public class OrderFormController //implements Initializable
     private TableColumn<GoodsInCheck, BigDecimal> goodsSummColumn;
     @FXML
     private Label globalSumOnCheck;
+    @FXML
+    private Button btnCheckout;
 
     private ResourceBundle bundle;
 
@@ -84,6 +88,24 @@ public class OrderFormController //implements Initializable
 
     public static void setRootPane(BorderPane orderForm) {
         OrderForm = orderForm;
+    }
+
+    /**
+     * Adds autoscroll to JavaFX tableview and selects last added row.
+     *
+     * @param view
+     */
+    public static <GoodsInCheck> void addAutoScroll(final TableView<GoodsInCheck> view) {
+        try {
+            view.getItems().addListener((ListChangeListener<GoodsInCheck>) (change -> {
+                change.next();
+                final int size = view.getItems().size();
+                if (size > 0) {
+                    view.scrollTo(size - 1);
+                    view.getSelectionModel().selectLast();
+                }
+            }));
+        } catch (NullPointerException ignored) {}
     }
 
 
@@ -166,7 +188,17 @@ public class OrderFormController //implements Initializable
 
         // Add observable list data to the table
         checkTableView.setItems(MainApp.getGoodsInCheckObservableList());
+        //добавление автоскрола на последнюю строку и ее выделение
+        addAutoScroll(checkTableView);
+        //запрет перемещения столбцов таблицы (получаем строку заголовка и отслеживаем попытки ее изменения)
+        checkTableView.widthProperty().addListener((source, oldWidth, newWidth) -> {
+            TableHeaderRow header = (TableHeaderRow) checkTableView.lookup("TableHeaderRow");
+            header.reorderingProperty().addListener((observable, oldValue, newValue) -> {
+                header.setReordering(false);
+            });
+        });
 
+        //checkTableViewNotFXML = checkTableView;
         /*WITHOUT LAMBDA
         goodsNameColumn = new TableColumn<GoodsInCheck,String>();
         goodsNameColumn.setCellValueFactory(new PropertyValueFactory<GoodsInCheck,String>("name"));
@@ -200,6 +232,14 @@ public class OrderFormController //implements Initializable
 
     public void setBackButton() {
         mainApp.rootLayout.setCenter(MainFormController.getRootPane());
+    }
+
+    public void setCheckout() {
+        Alert alertQuestion = new Alert(Alert.AlertType.INFORMATION);
+        alertQuestion.initOwner(mainApp.getMainStage());
+        alertQuestion.setTitle("Вау! Крутотенюшка!");
+        alertQuestion.setHeaderText("Типа пошла оплата");
+        alertQuestion.showAndWait();
     }
 
     public static BigDecimal getGlobalSumOnCheck(){

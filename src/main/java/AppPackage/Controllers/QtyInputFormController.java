@@ -50,7 +50,6 @@ public class QtyInputFormController //implements Initializable
     private Button btnBackSpace;
     @FXML
     private TextField txtValue;
-    private Stage InputStage;
 
     private ResourceBundle bundle;
 
@@ -74,7 +73,7 @@ public class QtyInputFormController //implements Initializable
     public void initialize() {
         //textField.getProperties().put("vkType", "numeric");
         log.debug("Initialising loginForm");
-
+        txtValue.setText("1"); //всегда при открытии окна будет ставиться 1(одна) единица товара
 
         //      bundle = resources;
         //      messagelabel.setText(bundle.getString("Label.text"));

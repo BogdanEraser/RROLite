@@ -33,7 +33,7 @@ public class GoodsFormController //implements Initializable
     private static MainApp mainApp;
     private static int selectedGroup;
     private ArrayList<Goods> goodsInSelectedGroup;
-    private static BigDecimal quantity = new BigDecimal(2);
+    private static BigDecimal quantity = new BigDecimal(1);
 
     @FXML
     private BorderPane GoodsForm;
@@ -61,7 +61,7 @@ public class GoodsFormController //implements Initializable
         GoodsForm = goodsForm;
     }
 
-      public void setMainApp(MainApp mainApp) {
+    public void setMainApp(MainApp mainApp) {
         GoodsFormController.mainApp = mainApp;
     }
 
@@ -111,15 +111,15 @@ public class GoodsFormController //implements Initializable
                     //BorderPane qtyInputPane = fxmlLoader.load();
                     root = fxmlLoader.load();
                     log.debug("Отображаем форму выбора товаров");
-                    stage.setScene(new Scene(root,640,500));
+                    stage.setScene(new Scene(root, 640, 500));
                     stage.setTitle(goodsInSelectedGroup.get(finalI).getName());
                     stage.initModality(Modality.APPLICATION_MODAL);
                     stage.setResizable(false);
                     //stage.initStyle(StageStyle.UNDECORATED);
                     stage.initOwner(btn.getScene().getWindow());
                     stage.initStyle(StageStyle.UTILITY);
-                    stage.setOnCloseRequest(we -> {
-                        we.consume();
+                    stage.setOnCloseRequest(windowEvent -> {
+                        windowEvent.consume();
                         log.debug("QtyInputForm stage is closing");
                     });
                     // Give the controller access to the main app.
@@ -131,28 +131,29 @@ public class GoodsFormController //implements Initializable
                     log.debug("Ошибка загрузки формы ввода количества товара " + e.toString());
                     e.printStackTrace();
                 }
+                if (quantity.compareTo(BigDecimal.ZERO) != 0) {
+                    BigDecimal summary = new BigDecimal(goodsInSelectedGroup.get(finalI).getPrice().getValue().toString()).multiply(quantity);
 
-                BigDecimal summary = new BigDecimal(goodsInSelectedGroup.get(finalI).getPrice().getValue().toString()).multiply(quantity);
-
-                //OrderFormController.getGoodsInCheckObservableList().add(new GoodsInCheck(goodsInSelectedGroup.get(finalI),quantity,summary));
-                if (MainApp.getGoodsInCheckObservableList().size() == 0) { //заказ пуст, добавляем первый товар в чек
-                    MainApp.getGoodsInCheckObservableList().add(new GoodsInCheck(goodsInSelectedGroup.get(finalI), quantity, summary));
-                } else {
-                    boolean isGoodsFound = false;  //заказ не пуст, ищем такой же товар
-                    for (int j = 0; j < MainApp.getGoodsInCheckObservableList().size(); j++) {
-                        if (MainApp.getGoodsInCheckObservableList().get(j).getGoods().getCode() == goodsInSelectedGroup.get(finalI).getCode()) { //товар найден, изменяем количество
-                            BigDecimal localQty = new BigDecimal(MainApp.getGoodsInCheckObservableList().get(j).quantityProperty().getValue().toString()).add(quantity);
-                            BigDecimal localSummary = new BigDecimal(goodsInSelectedGroup.get(finalI).getPrice().getValue().toString()).multiply(localQty);
-                            MainApp.getGoodsInCheckObservableList().get(j).setQuantity(localQty);
-                            MainApp.getGoodsInCheckObservableList().get(j).setSummaryOnGoods(localSummary);
-                            isGoodsFound = true;
-                            break;
+                    if (MainApp.getGoodsInCheckObservableList().size() == 0) { //заказ пуст, добавляем первый товар в чек
+                        MainApp.getGoodsInCheckObservableList().add(new GoodsInCheck(goodsInSelectedGroup.get(finalI), quantity, summary));
+                    } else {
+                        boolean isGoodsFound = false;  //заказ не пуст, ищем такой же товар
+                        for (int j = 0; j < MainApp.getGoodsInCheckObservableList().size(); j++) {
+                            if (MainApp.getGoodsInCheckObservableList().get(j).getGoods().getCode() == goodsInSelectedGroup.get(finalI).getCode()) { //товар найден, изменяем количество
+                                BigDecimal localQty = new BigDecimal(MainApp.getGoodsInCheckObservableList().get(j).quantityProperty().getValue().toString()).add(quantity);
+                                BigDecimal localSummary = new BigDecimal(goodsInSelectedGroup.get(finalI).getPrice().getValue().toString()).multiply(localQty);
+                                MainApp.getGoodsInCheckObservableList().get(j).setQuantity(localQty);
+                                MainApp.getGoodsInCheckObservableList().get(j).setSummaryOnGoods(localSummary);
+                                isGoodsFound = true;
+                                break;
+                            }
+                        }
+                        if (!isGoodsFound) { //товар не найден, добавляем новый товар
+                            MainApp.getGoodsInCheckObservableList().add(new GoodsInCheck(goodsInSelectedGroup.get(finalI), quantity, summary));
                         }
                     }
-                    if (!isGoodsFound) { //товар не найден, добавляем новый товар
-                        MainApp.getGoodsInCheckObservableList().add(new GoodsInCheck(goodsInSelectedGroup.get(finalI), quantity, summary));
-                            }
                 }
+                //подсчитаем общий итог по чеку
                 MainApp.checkSummaryProperty().setValue(new BigDecimal(OrderFormController.getGlobalSumOnCheck().toString()));
                 mainApp.rootLayout.setCenter(OrderFormController.getRootPane());
 
@@ -186,21 +187,6 @@ public class GoodsFormController //implements Initializable
         btn.setTextOverrun(OverrunStyle.CLIP);
         btn.setTextAlignment(TextAlignment.CENTER);
         buttonsGridPane.add(btn, 4, 6);
-            /* WITHOUT LAMBDA
-        nameColumn = new TableColumn<Tovar,String>("Наименование");
-        nameColumn.setCellValueFactory(new PropertyValueFactory<Tovar,String>("name"));
-        priceColumn = new TableColumn<Tovar,BigDecimal>("Цена");
-        priceColumn.setCellValueFactory(new PropertyValueFactory<Tovar,BigDecimal>("price"));
-        */
-
-        // goodsNameColumn.setCellValueFactory(new Cell<Goods,String>(goodsObservableList.get(i).getName()));
-        //goodsNameColumn.setCellValueFactory(cellData -> cellData.getValue().getName());
-        //goodsPriceColumn.setCellValueFactory(cellData -> cellData.getValue().getPrice());
-
-        // Listen for selection changes and show the tovar details when changed.
-        //checkTableView.getSelectionModel().selectedItemProperty().addListener(
-        //        (observable, oldValue, newValue) -> showTovarDetails(newValue));
-
 
     }
 

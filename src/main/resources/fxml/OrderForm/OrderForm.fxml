@@ -12,8 +12,8 @@
         <columnConstraints>
           <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="400.0" />
             <ColumnConstraints hgrow="SOMETIMES" />
-            <ColumnConstraints hgrow="SOMETIMES" />
-            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="130.0" />
+            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" />
+            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="150.0" />
             <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="75.0" />
         </columnConstraints>
         <rowConstraints>
@@ -49,6 +49,11 @@
                       </Label>
                </children>
             </VBox>
+            <Button fx:id="btnCheckout" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#setCheckout" prefHeight="60.0" prefWidth="160.0" text="Рассчитать" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" GridPane.columnIndex="2">
+               <font>
+                  <Font name="Verdana" size="22.0" />
+               </font>
+            </Button>
          </children>
       </GridPane>
    </bottom>
@@ -123,7 +128,7 @@
                         </Label>
                         <Label fx:id="globalSumOnCheck" text="Summarno" textAlignment="RIGHT" textOverrun="CLIP" GridPane.columnIndex="4" GridPane.halignment="CENTER">
                            <font>
-                              <Font name="Verdana Bold" size="20.0" />
+                              <Font name="Verdana Bold" size="22.0" />
                            </font>
                            <GridPane.margin>
                               <Insets />
