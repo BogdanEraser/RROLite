@@ -10,6 +10,7 @@ import javafx.animation.Timeline;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
@@ -17,12 +18,17 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.ListIterator;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 
@@ -30,7 +36,10 @@ public class OrderFormController //implements Initializable
 {
     private static final Logger log = Logger.getLogger(OrderFormController.class);
     private static MainApp mainApp;
-    private Scene scene;
+    private static Scene scene;
+    private static TableView<GoodsInCheck> checkTableView1;
+    private Stage stage;
+    private Parent root;
 
     @FXML
     private static BorderPane OrderForm;
@@ -45,7 +54,7 @@ public class OrderFormController //implements Initializable
     @FXML
     private ImageView NotConnectedIcon;
     @FXML
-    private TableView<GoodsInCheck> checkTableView;
+    public TableView<GoodsInCheck> checkTableView;
     @FXML
     private TableColumn<GoodsInCheck, String> goodsNameColumn;
     @FXML
@@ -79,7 +88,7 @@ public class OrderFormController //implements Initializable
     }
 
     public void setScene(Scene scene) {
-        this.scene = scene;
+        OrderFormController.scene = scene;
     }
 
     public static BorderPane getRootPane() {
@@ -88,6 +97,14 @@ public class OrderFormController //implements Initializable
 
     public static void setRootPane(BorderPane orderForm) {
         OrderForm = orderForm;
+    }
+
+    public static Scene getScene() {
+        return scene;
+    }
+
+    public static TableView<GoodsInCheck> getCheckTableView() {
+        return checkTableView1;
     }
 
     /**
@@ -102,18 +119,19 @@ public class OrderFormController //implements Initializable
                 final int size = view.getItems().size();
                 if (size > 0) {
                     view.scrollTo(size - 1);
-                    view.getSelectionModel().selectLast();
+                   // view.getSelectionModel().selectLast();
                 }
             }));
-        } catch (NullPointerException ignored) {}
+        } catch (NullPointerException ignored) {
+        }
     }
 
 
     @FXML
     public void initialize() {
         log.debug("Initialising MainForm");
-        lblRROSumCash.setText("Сумма оплат наличными: " + CurrentRRO.getInstance((byte) 1, "7", "115200").getCashInRRO());
-        lblRROSumCredit.setText("Сумма оплат кредитной картой: " + CurrentRRO.getInstance((byte) 1, "7", "115200").getCreditInRRO());
+        lblRROSumCash.setText("Сумма оплат наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO());
+        lblRROSumCredit.setText("Сумма оплат кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO());
         if (CheckInternetConnnection.getInstance().isConnected()) {
             ConnectedIcon.setVisible(true);
             NotConnectedIcon.setVisible(false);
@@ -181,15 +199,17 @@ public class OrderFormController //implements Initializable
                 buttonsGridPane.add(btn, 1, i - 10);
             }
 
-            globalSumOnCheck.setText(getGlobalSumOnCheck().toString());
+            //globalSumOnCheck.setText(getGlobalSumOnCheck().toString());
         }
 
         globalSumOnCheck.textProperty().bind(MainApp.checkSummaryProperty().asString());
 
         // Add observable list data to the table
         checkTableView.setItems(MainApp.getGoodsInCheckObservableList());
+        checkTableView1 = checkTableView;
         //добавление автоскрола на последнюю строку и ее выделение
-        addAutoScroll(checkTableView);
+        //addAutoScroll(checkTableView);
+
         //запрет перемещения столбцов таблицы (получаем строку заголовка и отслеживаем попытки ее изменения)
         checkTableView.widthProperty().addListener((source, oldWidth, newWidth) -> {
             TableHeaderRow header = (TableHeaderRow) checkTableView.lookup("TableHeaderRow");
@@ -216,18 +236,18 @@ public class OrderFormController //implements Initializable
         goodsSummColumn.setCellValueFactory(cellData -> cellData.getValue().summaryOnGoodsProperty());
         goodsSummColumn.setStyle(tblColStyle);
 
-        //MainApp.getGoodsInCheckObservableList().addListener((ListChangeListener) change -> {
-        //    globalSumOnCheck.setText(getGlobalSumOnCheck().toString());
-        //});
 
-
-
-
-        // Listen for selection changes and show the tovar details when changed.
-        //checkTableView.getSelectionModel().selectedItemProperty().addListener(
-        //        (observable, oldValue, newValue) -> showTovarDetails(newValue));
-
-
+        checkTableView.getSelectionModel().selectedItemProperty().addListener(
+                (observable, oldValue, newValue) -> {
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                    alert.setTitle("Вопрос");
+                    alert.setHeaderText("Удалить товар из заказа?");
+                    alert.setContentText(newValue.getGoods().getName());
+                    Optional<ButtonType> result = alert.showAndWait();
+                    if (result.isPresent() && result.get() == ButtonType.OK) {
+                        deleteGoodsFromOrder(newValue);
+                    }
+                });
     }
 
     public void setBackButton() {
@@ -235,20 +255,52 @@ public class OrderFormController //implements Initializable
     }
 
     public void setCheckout() {
-        Alert alertQuestion = new Alert(Alert.AlertType.INFORMATION);
-        alertQuestion.initOwner(mainApp.getMainStage());
-        alertQuestion.setTitle("Вау! Крутотенюшка!");
-        alertQuestion.setHeaderText("Типа пошла оплата");
-        alertQuestion.showAndWait();
+        //покажем форму выбора оплаты
+        try {
+            stage = new Stage();
+            String fxmlFormPath = "/fxml/PayForm/PayForm.fxml";
+            log.debug("Loading PayTypeForm for making payment into new scene");
+            FXMLLoader fxmlLoader = new FXMLLoader();
+            fxmlLoader.setLocation(MainApp.class.getResource(fxmlFormPath));
+            log.debug("Setting location from FXML - PayForm");
+            root = fxmlLoader.load();
+            log.debug("Отображаем форму оплаты");
+            stage.setScene(new Scene(root, 800, 600));
+            //stage.initStyle(StageStyle.UNDECORATED);
+            stage.setTitle("Выбор типа оплаты");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setResizable(false);
+            stage.initOwner(btnCheckout.getScene().getWindow());
+            stage.initStyle(StageStyle.UTILITY);
+            stage.setOnCloseRequest(windowEvent -> {
+                windowEvent.consume();
+            });
+            // Give the controller access to the main app.
+            PayFormController payFormController = fxmlLoader.getController();
+            payFormController.setMainApp(mainApp);
+            stage.showAndWait();
+
+        } catch (IOException e) {
+            log.debug("Ошибка загрузки формы выбора типа оплаты " + e.toString());
+        }
     }
 
-    public static BigDecimal getGlobalSumOnCheck(){
+    public static BigDecimal getGlobalSumOnCheck() {
         BigDecimal sumOnCheck = new BigDecimal(0);
-        for (GoodsInCheck entry : MainApp.getGoodsInCheckObservableList())
-        {
+        for (GoodsInCheck entry : MainApp.getGoodsInCheckObservableList()) {
             sumOnCheck = sumOnCheck.add(new BigDecimal(entry.getSummaryOnGoods().toString()));
         }
         return sumOnCheck;
+    }
+
+    public static void deleteGoodsFromOrder(GoodsInCheck goodsInCheck) {
+        ListIterator<GoodsInCheck> goodsInCheckListIterator = MainApp.getGoodsInCheckObservableList().listIterator();
+        while (goodsInCheckListIterator.hasNext()){
+            if (goodsInCheckListIterator.next().getGoods().getCode() == goodsInCheck.getGoods().getCode()) {
+                goodsInCheckListIterator.remove();
+                break;
+            }
+        }
     }
 
 }

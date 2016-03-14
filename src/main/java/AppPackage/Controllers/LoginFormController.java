@@ -84,16 +84,15 @@ public class LoginFormController //implements Initializable
         //textField.getProperties().put("vkType", "numeric");
         log.debug("Initialising loginForm");
         //получение данных о логинах и паролях из файла экселя
-        String excelFilePath = "D:\\Java\\rro-soft.xlsx";
-        Workbook workbook = ExcelUtils.getWorkbookFromExcelFile(excelFilePath);  //получаем книгу экселя
+        Workbook workbook = ExcelUtils.getWorkbookFromExcelFile(MainApp.getPathToDataFile());  //получаем книгу экселя
         String sheetName = "access";
         Sheet sheet = workbook.getSheet(sheetName);
         FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
         if (sheet == null) {
-            log.debug("File " + excelFilePath + " does not have sheet " + sheetName);
+            log.debug("File " + MainApp.getPathToDataFile() + " does not have sheet " + sheetName);
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Ошибка");
-            alert.setHeaderText("Не могу открыть лист " + sheetName + " в файле " + excelFilePath);
+            alert.setHeaderText("Не могу открыть лист " + sheetName + " в файле " + MainApp.getPathToDataFile());
             alert.showAndWait();
         } else {
             // Decide which rows to process (с 4-го по 103) - т.е. максимум 100 аккаунтов
@@ -324,7 +323,25 @@ public class LoginFormController //implements Initializable
                         mainFormController.setMainApp(this.mainApp);
                     } catch (IOException e) {
                         log.debug("Ошибка загрузки главной формы" + e.toString());
-                        e.printStackTrace();
+                        String headerText;
+                        String contentText;
+                        if (MainApp.getPrinterType() == 0 | MainApp.getPrinterPort() == 0 | MainApp.getPrinerPortSpeed() == 0) {
+                            headerText = "Нет информации о подключении фискального принтера в файле настроек 'rro.ini'";
+                            contentText = "Возможно, эти параметры заданы неверно";
+                        } else {
+                            headerText = "Неизвестная ошибка загрузки главной формы";
+                            contentText = e.toString();
+                        }
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Ошибка");
+                        alert.setHeaderText(headerText);
+                        alert.setContentText(contentText);
+                        Optional<ButtonType> result = alert.showAndWait();
+                        if (result.isPresent() && result.get() == ButtonType.OK) {
+                            log.debug("нормальный выход");
+                            Platform.exit();
+                            System.exit(0);
+                        }
                     }
                 }
             }

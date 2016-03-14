@@ -9,6 +9,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.OverrunStyle;
+import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
@@ -104,7 +105,7 @@ public class GoodsFormController //implements Initializable
                 try {
                     stage = new Stage();
                     String fxmlFormPath = "/fxml/QtyInputForm/QtyInputForm.fxml";
-                    log.debug("Loading QtyInputForm for input quantity of goods into RootLayout");
+                    log.debug("Loading QtyInputForm for input quantity of goods into new scene");
                     FXMLLoader fxmlLoader = new FXMLLoader();
                     fxmlLoader.setLocation(MainApp.class.getResource(fxmlFormPath));
                     log.debug("Setting location from FXML - QtyInputForm");
@@ -112,7 +113,7 @@ public class GoodsFormController //implements Initializable
                     root = fxmlLoader.load();
                     log.debug("Отображаем форму выбора товаров");
                     stage.setScene(new Scene(root, 640, 500));
-                    stage.setTitle(goodsInSelectedGroup.get(finalI).getName());
+                    stage.setTitle(goodsInSelectedGroup.get(finalI).getName() + ",   цена: "+goodsInSelectedGroup.get(finalI).getPrice().getValue().toString());
                     stage.initModality(Modality.APPLICATION_MODAL);
                     stage.setResizable(false);
                     //stage.initStyle(StageStyle.UNDECORATED);
@@ -120,7 +121,6 @@ public class GoodsFormController //implements Initializable
                     stage.initStyle(StageStyle.UTILITY);
                     stage.setOnCloseRequest(windowEvent -> {
                         windowEvent.consume();
-                        log.debug("QtyInputForm stage is closing");
                     });
                     // Give the controller access to the main app.
                     QtyInputFormController qtyInputFormController = fxmlLoader.getController();
@@ -155,6 +155,11 @@ public class GoodsFormController //implements Initializable
                 }
                 //подсчитаем общий итог по чеку
                 MainApp.checkSummaryProperty().setValue(new BigDecimal(OrderFormController.getGlobalSumOnCheck().toString()));
+                if (MainApp.getGoodsInCheckObservableList().size() > 0) {
+                    TableView tb = (TableView) OrderFormController.getCheckTableView();
+                    tb.scrollTo(MainApp.getGoodsInCheckObservableList().size()- 1);
+                    //tb.getSelectionModel().selectLast();
+                }
                 mainApp.rootLayout.setCenter(OrderFormController.getRootPane());
 
             });

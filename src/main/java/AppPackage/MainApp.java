@@ -5,12 +5,15 @@ import AppPackage.Entities.Goods;
 import AppPackage.Entities.GoodsGroup;
 import AppPackage.Entities.GoodsInCheck;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
@@ -18,7 +21,12 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class MainApp extends Application {
     private static final Logger log = Logger.getLogger(MainApp.class);
@@ -26,9 +34,13 @@ public class MainApp extends Application {
     public BorderPane rootLayout;
     public ArrayList<Goods> allGoodsArrayList;
     public ArrayList<GoodsGroup> allGoodsGroupsArrayList;
-    public static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList(goodsInCheckQTY -> new Observable[] {goodsInCheckQTY.quantityProperty()} );
+    public static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList(goodsInCheckQTY -> new Observable[]{goodsInCheckQTY.quantityProperty()});
     private static SimpleObjectProperty checkSummary;
     private Stage MainStage;
+    private static String pathToDataFile;
+    private static int printerType;
+    private static int printerPort;
+    private static int prinerPortSpeed;
 
     /**
      * MAIN ROUTINE
@@ -47,6 +59,27 @@ public class MainApp extends Application {
         }
 
         checkSummary = new SimpleObjectProperty<BigDecimal>(new BigDecimal(0));
+        //получение параметров настройки программы из файла настроек
+        try {
+            String setupFilePath = "rro.ini";
+            log.debug("getting setup data from rro.ini");
+            //если файл существует и размером не более 1024 байта (что бы не переполнить буфер)
+            if (Files.exists(Paths.get(setupFilePath)) && (Files.size(Paths.get(setupFilePath)) <= 1024)) {
+                List<String> lines = Files.readAllLines(Paths.get(setupFilePath), Charset.defaultCharset());
+                String[] splittedLines = lines.get(0).split(";");
+                pathToDataFile = splittedLines[0];
+                printerType = Integer.parseInt(splittedLines[1]);
+                printerPort = Integer.parseInt(splittedLines[2]);
+                prinerPortSpeed = Integer.parseInt(splittedLines[3]);
+                log.debug("pathToDataFile: " + pathToDataFile);
+                log.debug("printerType: " + printerType);
+                log.debug("printerPort: " + printerPort);
+                log.debug("printerPortSpeed: " + prinerPortSpeed);
+            }
+        } catch (IOException e) {
+            log.debug("error getting setup data from rro.ini" + e.toString());
+        }
+
 
         launch(args);
     }
@@ -82,6 +115,22 @@ public class MainApp extends Application {
 
     public Stage getMainStage() {
         return MainStage;
+    }
+
+    public static String getPathToDataFile() {
+        return pathToDataFile;
+    }
+
+    public static int getPrinerPortSpeed() {
+        return prinerPortSpeed;
+    }
+
+    public static int getPrinterPort() {
+        return printerPort;
+    }
+
+    public static int getPrinterType() {
+        return printerType;
     }
 
     @Override
@@ -142,8 +191,29 @@ public class MainApp extends Application {
             loginFormController.setMainApp(this);
 
         } catch (IOException e) {
-            log.debug("Ошибка загрузки формы логина");
-            e.printStackTrace();
+            log.debug("Ошибка загрузки формы логина" + e.toString());
+            String headerText;
+            String contentText;
+            if (MainApp.getPathToDataFile() == null) {
+                headerText = "Нет информации о параметрах программы";
+                contentText = "Возможно, не найден или пуст файл 'rro.ini', \nили его размер более 1Кб";
+            } else if (!Files.exists(Paths.get(MainApp.getPathToDataFile()))) {
+                headerText = "Недоступен файл с данными программы";
+                contentText = "Путь к файлу (согласно параметрам из rro.ini): " + MainApp.getPathToDataFile();
+            } else {
+                headerText = "Неизвестная ошибка загрузки формы логина";
+                contentText = e.toString();
+            }
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Ошибка");
+            alert.setHeaderText(headerText);
+            alert.setContentText(contentText);
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                log.debug("нормальный выход");
+                Platform.exit();
+                System.exit(0);
+            }
         }
     }
 }

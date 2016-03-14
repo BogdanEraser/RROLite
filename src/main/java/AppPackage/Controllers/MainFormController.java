@@ -52,6 +52,10 @@ public class MainFormController //implements Initializable
     @FXML
     private Button btnExit;
     @FXML
+    private Button btnSetupRRO;
+    @FXML
+    private Button btnStart;
+    @FXML
     private ImageView ConnectedIcon;
     @FXML
     private ImageView NotConnectedIcon;
@@ -91,9 +95,13 @@ public class MainFormController //implements Initializable
     @FXML
     public void initialize() {
         log.debug("Initialising mainForm");
-        lblRROSumCash.setText("Сумма оплат наличными: " + CurrentRRO.getInstance((byte) 1, "7", "115200").getCashInRRO());
-        lblRROSumCredit.setText("Сумма оплат кредитной картой: " + CurrentRRO.getInstance((byte) 1, "7", "115200").getCreditInRRO());
+        lblRROSumCash.setText("Сумма оплат наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO());
+        lblRROSumCredit.setText("Сумма оплат кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO());
         lblMessage.setText("Пользователь: " + CurrentUser.getInstance().getName());
+
+        if (CurrentUser.getInstance().getAccessLevel()<2) {btnSetupRRO.setVisible(true);}
+        else {btnSetupRRO.setVisible(false);}
+
         currentTime = LocalTime.now();
         lblTime.setText("Сейчас: " + currentTime.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM)));
         if (CheckInternetConnnection.getInstance().isConnected()) {
@@ -122,18 +130,17 @@ public class MainFormController //implements Initializable
 
     public void setStartButton() {
         // получаем данные о товарах из файла экселя
-        String excelFilePath = "C:\\Dropbox\\rro-soft.xlsx";
-        Workbook workbook = ExcelUtils.getWorkbookFromExcelFile(excelFilePath);  //получаем книгу экселя
+        Workbook workbook = ExcelUtils.getWorkbookFromExcelFile(MainApp.getPathToDataFile());  //получаем книгу экселя
 
-        //получим все ИЗБРАННЫЕ ДЛЯ ПРОДАЖИ товары с список
+        //получим все ИЗБРАННЫЕ ДЛЯ ПРОДАЖИ товары в список
         String sheetName = "product_selected";
         Sheet sheet = workbook.getSheet(sheetName);
         FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
         if (sheet == null) {
-            log.debug("File " + excelFilePath + " does not have sheet " + sheetName);
+            log.debug("File " + MainApp.getPathToDataFile() + " does not have sheet " + sheetName);
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Ошибка");
-            alert.setHeaderText("Не могу открыть лист " + sheetName + " в файле " + excelFilePath);
+            alert.setHeaderText("Не могу открыть лист " + sheetName + " в файле " + MainApp.getPathToDataFile());
             alert.showAndWait();
         } else {
             int rowStart = 4; // Decide which rows to process (с 5-го по 38-й) - т.е. максимум 34 товара в группе
@@ -350,9 +357,9 @@ public class MainFormController //implements Initializable
             OrderFormController orderFormController = fxmlLoader.getController();
             OrderFormController.setRootPane(orderPane);
             orderFormController.setMainApp(mainApp);
+            orderFormController.setScene(mainApp.getMainStage().getScene());
         } catch (IOException e) {
             log.debug("Ошибка загрузки формы заказов " + e.toString());
-            e.printStackTrace();
         }
     }
 
@@ -369,4 +376,19 @@ public class MainFormController //implements Initializable
         }
     }
 
+    public void setSetupRROButton() {
+        Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+        alertQuestion.initOwner(mainApp.getMainStage());
+        alertQuestion.setTitle("Уточнение");
+        alertQuestion.setHeaderText("Открыть настроки РРО?");
+        Optional<ButtonType> result = alertQuestion.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                log.debug("открываем внешнее приложение настроек РРО");
+                Runtime.getRuntime().exec("C:\\UNI-PROGress\\Uniprog.exe");
+            } catch (IOException e) {
+                log.debug("Ошибка открытия внешнего приложения настроек РРО. " + e.toString());
+            }
+        }
+    }
 }

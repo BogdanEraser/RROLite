@@ -19,9 +19,9 @@
                                               <Font name="Verdana" size="24.0" />
                                           </font>
                                       </TextField>
-                                      <Button fx:id="btnBackSpace" mnemonicParsing="false" onAction="#setBtnBackSpace" prefHeight="50.0" prefWidth="120.0" text="удалить">
+                                      <Button fx:id="btnBackSpace" mnemonicParsing="false" onAction="#setBtnBackSpace" prefHeight="50.0" prefWidth="120.0" text="&lt;=">
                                           <font>
-                                              <Font size="20.0" />
+                                              <Font size="24.0" />
                                           </font>
                                       </Button>
                                   </children>

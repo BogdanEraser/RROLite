@@ -1,6 +1,7 @@
 package AppPackage.Controllers;
 
 import AppPackage.MainApp;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -13,14 +14,23 @@ import java.math.BigDecimal;
 import java.util.ResourceBundle;
 
 
-public class QtyInputFormController //implements Initializable
+public class PayFormController //implements Initializable
 {
-    private static final Logger log = Logger.getLogger(QtyInputFormController.class);
+    private static final Logger log = Logger.getLogger(PayFormController.class);
     private Scene scene;
     private MainApp mainApp;
-    private boolean isFirstOpening;
+    private BigDecimal chkCharge;
+    private SimpleObjectProperty showCharge;
     @FXML
-    private AnchorPane QtyInputForm;
+    private AnchorPane PayForm;
+    @FXML
+    private Button btnPayCash;
+    @FXML
+    private Button btnPayCC;
+    @FXML
+    private Button btnGoodsReturn;
+    @FXML
+    private Button btnCancel;
     @FXML
     private Button btn1;
     @FXML
@@ -44,17 +54,17 @@ public class QtyInputFormController //implements Initializable
     @FXML
     private Button btnComa;
     @FXML
-    private Button btnOK;
-    @FXML
-    private Button btnCancel;
-    @FXML
     private Button btnBackSpace;
     @FXML
     private TextField txtValue;
+    @FXML
+    private TextField txtToPay;
+    @FXML
+    private TextField txtCharge;
 
     private ResourceBundle bundle;
 
-    public QtyInputFormController() {
+    public PayFormController() {
     }
 
     /**
@@ -70,17 +80,35 @@ public class QtyInputFormController //implements Initializable
         this.scene = scene;
     }
 
+    public Object getShowCharge() {
+        return showCharge.get();
+    }
+
+    public SimpleObjectProperty showChargeProperty() {
+        return showCharge;
+    }
+
+    public void setShowCharge(Object showCharge) {
+        this.showCharge.set(showCharge);
+    }
+
     @FXML
     public void initialize() {
         //textField.getProperties().put("vkType", "numeric");
-        log.debug("Initialising QtyInputForm");
-        txtValue.setText("1"); //всегда при открытии окна будет ставиться 1(одна) единица товара
-        isFirstOpening = true;
+        log.debug("Initialising PayForm");
+
+        txtValue.setText("0");
+        txtToPay.textProperty().bind(MainApp.checkSummaryProperty().asString());
+
+        chkCharge = new BigDecimal(String.valueOf(BigDecimal.ZERO.subtract(new BigDecimal(MainApp.checkSummaryProperty().getValue().toString()))));
+        showCharge = new SimpleObjectProperty<BigDecimal>(chkCharge);
+        txtCharge.textProperty().bind(showChargeProperty().asString());
+
+        txtValue.requestFocus();
 
         //      bundle = resources;
         //      messagelabel.setText(bundle.getString("Label.text"));
     }
-
 
     /**
      * обработка нажатия цифровой кнопки
@@ -88,18 +116,15 @@ public class QtyInputFormController //implements Initializable
      * @param digit цифра для печати
      */
     public void pushTheButton(String digit) {
-        if (isFirstOpening) {
-            txtValue.setText(digit);
-            isFirstOpening = false;
-        } else if (txtValue.getText().length() < 8) {
-            if (txtValue.getText().length() < 8) {
-                if (!txtValue.getText().equals("0")) {
-                    txtValue.setText(txtValue.getText() + digit);
-                } else {
-                    txtValue.setText(digit);
-                }
+        if (txtValue.getText().length() < 8) {
+            if (!txtValue.getText().equals("0")) {
+                txtValue.setText(txtValue.getText() + digit);
+            } else {
+                txtValue.setText(digit);
             }
         }
+        //обновляем сдачу покупателю
+        setShowCharge(new BigDecimal(txtValue.getText().replace(",", ".")).subtract(new BigDecimal(MainApp.checkSummaryProperty().getValue().toString())));
     }
 
 
@@ -184,6 +209,8 @@ public class QtyInputFormController //implements Initializable
                 txtValue.setText(txtValue.getText() + ",");
             }
         }
+        //обновляем сдачу покупателю
+        setShowCharge(new BigDecimal(txtValue.getText().replace(",", ".")).subtract(new BigDecimal(MainApp.checkSummaryProperty().getValue().toString())));
     }
 
     /**
@@ -191,29 +218,42 @@ public class QtyInputFormController //implements Initializable
      */
     public void setBtnBackSpace() {
         if (txtValue.getText().length() <= 1) {
-            txtValue.setText("");
+            txtValue.setText("0");
         } else txtValue.setText(txtValue.getText(0, txtValue.getText().length() - 1));
+        //обновляем сдачу покупателю
+        setShowCharge(new BigDecimal(txtValue.getText().replace(",", ".")).subtract(new BigDecimal(MainApp.checkSummaryProperty().getValue().toString())));
     }
 
     /**
      * нажатие кнопки "Отмена"
      */
     public void setBtnCancel() {
-        isFirstOpening = true;
-        GoodsFormController.setQuantity(new BigDecimal(0));
         Stage stage = (Stage) btnCancel.getScene().getWindow();
         stage.close();
     }
 
     /**
-     * нажатие кнопки "ОК"
+     * нажатие кнопки "наличные"
      */
-    public void setBtnOK() {
-        if (txtValue.getText().length() != 0) {
-            isFirstOpening = true;
-            GoodsFormController.setQuantity(new BigDecimal(txtValue.getText().replace(",", ".")));
-            Stage stage = (Stage) btnOK.getScene().getWindow();
-            stage.close();
-        }
+    public void setPayCash() {
+        Stage stage = (Stage) btnPayCash.getScene().getWindow();
+        stage.close();
     }
+
+    /**
+     * нажатие кнопки "карта"
+     */
+    public void setPayCC() {
+        Stage stage = (Stage) btnPayCash.getScene().getWindow();
+        stage.close();
+    }
+
+    /**
+     * нажатие кнопки "возврат товара"
+     */
+    public void setGoodsReturn() {
+        Stage stage = (Stage) btnPayCash.getScene().getWindow();
+        stage.close();
+    }
+
 }

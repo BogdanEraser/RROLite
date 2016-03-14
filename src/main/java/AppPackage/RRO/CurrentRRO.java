@@ -25,7 +25,7 @@ public class CurrentRRO {
     private String port;
     private String speed;
     private String dllName;
-    private byte printerType;
+    private int printerType;
 
     /**
      * конструктор для заданного типа принтера
@@ -34,7 +34,7 @@ public class CurrentRRO {
      * @param port        СОМ-порт
      * @param speed       скорость СОМ-порта
      */
-    private CurrentRRO(byte printerType, String port, String speed) {
+    private CurrentRRO(int printerType, String port, String speed) {
         switch (printerType) {
             case 0: {
             }
@@ -53,7 +53,7 @@ public class CurrentRRO {
         }
     }
 
-    public static CurrentRRO getInstance(byte printerType, String port, String speed) {
+    public static CurrentRRO getInstance(int printerType, String port, String speed) {
         if (instance == null) {
             instance = new CurrentRRO(printerType, port, speed);
         }
@@ -61,11 +61,11 @@ public class CurrentRRO {
     }
 
 
-    public byte getPrinterType() {
+    public int getPrinterType() {
         return printerType;
     }
 
-    public void setPrinterType(byte printerType) {
+    public void setPrinterType(int printerType) {
         this.printerType = printerType;
     }
 
