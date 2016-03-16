@@ -24,16 +24,16 @@
                   <Font name="Verdana" size="20.0" />
                </font>
             </Button>
-            <VBox>
+            <VBox alignment="CENTER_LEFT">
                <children>
-                  <Label fx:id="lblRROSumCash" text="RROSumCash" textOverrun="CLIP">
+                  <Label fx:id="lblRROSumCash" prefHeight="30.0" prefWidth="400.0" text="RROSumCash" textOverrun="CLIP">
                      <font>
-                        <Font size="24.0" />
+                        <Font size="22.0" />
                      </font>
                   </Label>
                   <Label fx:id="lblRROSumCredit" prefHeight="30.0" prefWidth="400.0" text="RROSumCredit" textOverrun="CLIP">
                      <font>
-                        <Font size="24.0" />
+                        <Font size="22.0" />
                      </font>
                   </Label>
                </children>

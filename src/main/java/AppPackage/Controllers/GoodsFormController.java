@@ -9,7 +9,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.OverrunStyle;
-import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
@@ -155,11 +154,7 @@ public class GoodsFormController //implements Initializable
                 }
                 //подсчитаем общий итог по чеку
                 MainApp.checkSummaryProperty().setValue(new BigDecimal(OrderFormController.getGlobalSumOnCheck().toString()));
-                if (MainApp.getGoodsInCheckObservableList().size() > 0) {
-                    TableView tb = (TableView) OrderFormController.getCheckTableView();
-                    tb.scrollTo(MainApp.getGoodsInCheckObservableList().size()- 1);
-                    //tb.getSelectionModel().selectLast();
-                }
+
                 mainApp.rootLayout.setCenter(OrderFormController.getRootPane());
 
             });

@@ -35,7 +35,7 @@ public class MainApp extends Application {
     public ArrayList<Goods> allGoodsArrayList;
     public ArrayList<GoodsGroup> allGoodsGroupsArrayList;
     public static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList(goodsInCheckQTY -> new Observable[]{goodsInCheckQTY.quantityProperty()});
-    private static SimpleObjectProperty checkSummary;
+    private static SimpleObjectProperty<BigDecimal> checkSummary;
     private Stage MainStage;
     private static String pathToDataFile;
     private static int printerType;
@@ -93,15 +93,15 @@ public class MainApp extends Application {
     }
 
 
-    public static Object getCheckSummary() {
+    public static BigDecimal getCheckSummary() {
         return checkSummary.get();
     }
 
-    public static SimpleObjectProperty checkSummaryProperty() {
+    public static SimpleObjectProperty<BigDecimal> checkSummaryProperty() {
         return checkSummary;
     }
 
-    public void setCheckSummary(Object checkSummary) {
+    public void setCheckSummary(BigDecimal checkSummary) {
         MainApp.checkSummary.set(checkSummary);
     }
 

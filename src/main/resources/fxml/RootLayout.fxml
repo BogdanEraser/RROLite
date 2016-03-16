@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.layout.BorderPane?>
-<BorderPane id="BorderPane" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8"/>
+<BorderPane id="BorderPane" prefHeight="768.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8"/>

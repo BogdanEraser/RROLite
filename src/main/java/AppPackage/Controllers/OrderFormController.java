@@ -37,7 +37,6 @@ public class OrderFormController //implements Initializable
     private static final Logger log = Logger.getLogger(OrderFormController.class);
     private static MainApp mainApp;
     private static Scene scene;
-    private static TableView<GoodsInCheck> checkTableView1;
     private Stage stage;
     private Parent root;
 
@@ -103,10 +102,6 @@ public class OrderFormController //implements Initializable
         return scene;
     }
 
-    public static TableView<GoodsInCheck> getCheckTableView() {
-        return checkTableView1;
-    }
-
     /**
      * Adds autoscroll to JavaFX tableview and selects last added row.
      *
@@ -119,7 +114,7 @@ public class OrderFormController //implements Initializable
                 final int size = view.getItems().size();
                 if (size > 0) {
                     view.scrollTo(size - 1);
-                   // view.getSelectionModel().selectLast();
+                    view.getSelectionModel().selectLast();
                 }
             }));
         } catch (NullPointerException ignored) {
@@ -130,8 +125,8 @@ public class OrderFormController //implements Initializable
     @FXML
     public void initialize() {
         log.debug("Initialising MainForm");
-        lblRROSumCash.setText("Сумма оплат наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO());
-        lblRROSumCredit.setText("Сумма оплат кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO());
+        lblRROSumCash.setText("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO());
+        lblRROSumCredit.setText("Кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO());
         if (CheckInternetConnnection.getInstance().isConnected()) {
             ConnectedIcon.setVisible(true);
             NotConnectedIcon.setVisible(false);
@@ -206,9 +201,8 @@ public class OrderFormController //implements Initializable
 
         // Add observable list data to the table
         checkTableView.setItems(MainApp.getGoodsInCheckObservableList());
-        checkTableView1 = checkTableView;
         //добавление автоскрола на последнюю строку и ее выделение
-        //addAutoScroll(checkTableView);
+        addAutoScroll(checkTableView);
 
         //запрет перемещения столбцов таблицы (получаем строку заголовка и отслеживаем попытки ее изменения)
         checkTableView.widthProperty().addListener((source, oldWidth, newWidth) -> {
@@ -227,8 +221,9 @@ public class OrderFormController //implements Initializable
         */
 
         goodsNameColumn.setCellValueFactory(cellData -> cellData.getValue().getGoods().nameProperty());
-        goodsNameColumn.setStyle("-fx-alignment: CENTER-LEFT; -fx-font-size: 21; -fx-font-weight: bold");
-        String tblColStyle = "-fx-alignment: CENTER-RIGHT; -fx-font-size: 21; -fx-font-weight: bold";
+        //goodsNameColumn.setStyle("-fx-alignment: CENTER-LEFT; -fx-font-size: 21; -fx-font-weight: bold");
+        goodsNameColumn.setStyle("-fx-alignment: CENTER-LEFT; -fx-font-size: 21");
+        String tblColStyle = "-fx-alignment: CENTER-RIGHT; -fx-font-size: 21";
         goodsPriceColumn.setCellValueFactory(cellData -> cellData.getValue().getGoods().priceProperty());
         goodsPriceColumn.setStyle(tblColStyle);
         goodsQtyColumn.setCellValueFactory(cellData -> cellData.getValue().quantityProperty());
@@ -237,17 +232,19 @@ public class OrderFormController //implements Initializable
         goodsSummColumn.setStyle(tblColStyle);
 
 
-        checkTableView.getSelectionModel().selectedItemProperty().addListener(
-                (observable, oldValue, newValue) -> {
-                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                    alert.setTitle("Вопрос");
-                    alert.setHeaderText("Удалить товар из заказа?");
-                    alert.setContentText(newValue.getGoods().getName());
-                    Optional<ButtonType> result = alert.showAndWait();
-                    if (result.isPresent() && result.get() == ButtonType.OK) {
-                        deleteGoodsFromOrder(newValue);
-                    }
-                });
+        //обработка двойного клика на строке таблицы для удаления товара
+        checkTableView.setOnMousePressed(event -> {
+            if (event.isPrimaryButtonDown() && event.getClickCount() == 2) {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("Вопрос");
+                alert.setHeaderText("Удалить товар из заказа?");
+                alert.setContentText(checkTableView.getSelectionModel().getSelectedItem().getGoods().getName());
+                Optional<ButtonType> result = alert.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK) {
+                    deleteGoodsFromOrder(checkTableView.getSelectionModel().getSelectedItem());
+                }
+            }
+        });
     }
 
     public void setBackButton() {
@@ -290,7 +287,7 @@ public class OrderFormController //implements Initializable
         for (GoodsInCheck entry : MainApp.getGoodsInCheckObservableList()) {
             sumOnCheck = sumOnCheck.add(new BigDecimal(entry.getSummaryOnGoods().toString()));
         }
-        return sumOnCheck;
+        return sumOnCheck.setScale(2,BigDecimal.ROUND_HALF_EVEN);
     }
 
     public static void deleteGoodsFromOrder(GoodsInCheck goodsInCheck) {
@@ -298,6 +295,7 @@ public class OrderFormController //implements Initializable
         while (goodsInCheckListIterator.hasNext()){
             if (goodsInCheckListIterator.next().getGoods().getCode() == goodsInCheck.getGoods().getCode()) {
                 goodsInCheckListIterator.remove();
+                MainApp.checkSummaryProperty().setValue(new BigDecimal(OrderFormController.getGlobalSumOnCheck().toString()));
                 break;
             }
         }

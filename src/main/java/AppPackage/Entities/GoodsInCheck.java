@@ -9,8 +9,8 @@ import java.math.BigDecimal;
  */
 public class GoodsInCheck {
     private Goods goods;
-    private SimpleObjectProperty quantity;
-    private SimpleObjectProperty summaryOnGoods;
+    private SimpleObjectProperty<BigDecimal> quantity;
+    private SimpleObjectProperty<BigDecimal> summaryOnGoods;
 
     public Goods getGoods() {
         return goods;
@@ -20,27 +20,27 @@ public class GoodsInCheck {
         this.goods = goods;
     }
 
-    public Object getQuantity() {
+    public BigDecimal getQuantity() {
         return quantity.get();
     }
 
-    public SimpleObjectProperty quantityProperty() {
-        return quantity;
+    public SimpleObjectProperty<BigDecimal> quantityProperty() {
+        return new SimpleObjectProperty<BigDecimal>(new BigDecimal(quantity.getValue().toString()).setScale(3,BigDecimal.ROUND_CEILING));
     }
 
-    public void setQuantity(Object quantity) {
+    public void setQuantity(BigDecimal quantity) {
         this.quantity.set(quantity);
     }
 
-    public Object getSummaryOnGoods() {
+    public BigDecimal getSummaryOnGoods() {
         return summaryOnGoods.get();
     }
 
-    public SimpleObjectProperty summaryOnGoodsProperty() {
-        return summaryOnGoods;
+    public SimpleObjectProperty<BigDecimal> summaryOnGoodsProperty() {
+        return new SimpleObjectProperty<BigDecimal>(new BigDecimal(summaryOnGoods.getValue().toString()).setScale(2,BigDecimal.ROUND_HALF_EVEN));
     }
 
-    public void setSummaryOnGoods(Object summaryOnGoods) {
+    public void setSummaryOnGoods(BigDecimal summaryOnGoods) {
         this.summaryOnGoods.set(summaryOnGoods);
     }
 
