@@ -183,6 +183,7 @@ public class QtyInputFormController //implements Initializable
             } else if (!txtValue.getText().contains(",")) {
                 txtValue.setText(txtValue.getText() + ",");
             }
+            isFirstOpening = false;
         }
     }
 

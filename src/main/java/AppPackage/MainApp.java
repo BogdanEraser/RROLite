@@ -31,7 +31,7 @@ import java.util.Optional;
 public class MainApp extends Application {
     private static final Logger log = Logger.getLogger(MainApp.class);
     private static boolean isRROLogEnabled;
-    public BorderPane rootLayout;
+    public static BorderPane rootLayout;
     public ArrayList<Goods> allGoodsArrayList;
     public ArrayList<GoodsGroup> allGoodsGroupsArrayList;
     public static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList(goodsInCheckQTY -> new Observable[]{goodsInCheckQTY.quantityProperty()});
@@ -59,12 +59,13 @@ public class MainApp extends Application {
         }
 
         checkSummary = new SimpleObjectProperty<BigDecimal>(new BigDecimal(0));
+
         //получение параметров настройки программы из файла настроек
         try {
             String setupFilePath = "rro.ini";
             log.debug("getting setup data from rro.ini");
             //если файл существует и размером не более 1024 байта (что бы не переполнить буфер)
-            if (Files.exists(Paths.get(setupFilePath)) && (Files.size(Paths.get(setupFilePath)) <= 1024)) {
+            if (Files.exists(Paths.get(setupFilePath)) & (Files.size(Paths.get(setupFilePath)) <= 1024)) {
                 List<String> lines = Files.readAllLines(Paths.get(setupFilePath), Charset.defaultCharset());
                 String[] splittedLines = lines.get(0).split(";");
                 pathToDataFile = splittedLines[0];
@@ -82,6 +83,10 @@ public class MainApp extends Application {
 
 
         launch(args);
+    }
+
+    public static BorderPane getRootLayout() {
+        return rootLayout;
     }
 
     public static ObservableList<GoodsInCheck> getGoodsInCheckObservableList() {
