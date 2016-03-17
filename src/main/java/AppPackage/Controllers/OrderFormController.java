@@ -125,8 +125,11 @@ public class OrderFormController //implements Initializable
     @FXML
     public void initialize() {
         log.debug("Initialising MainForm");
-        lblRROSumCash.setText("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO());
-        lblRROSumCredit.setText("Кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO());
+        if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
+            lblRROSumCash.setText("Сумма оплат наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO());
+            lblRROSumCredit.setText("Сумма оплат кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO());
+        }
+        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
         if (CheckInternetConnnection.getInstance().isConnected()) {
             ConnectedIcon.setVisible(true);
             NotConnectedIcon.setVisible(false);
@@ -171,7 +174,7 @@ public class OrderFormController //implements Initializable
                     BorderPane goodsPane = fxmlLoader.load();
                     log.debug("Отображаем форму выбора товаров");
                     // Set GoodsForm into the center of root layout.
-                    mainApp.rootLayout.setCenter(goodsPane);
+                    MainApp.rootLayout.setCenter(goodsPane);
                     // Give the controller access to the main app.
                     GoodsFormController goodsFormController = fxmlLoader.getController();
                     goodsFormController.setRootPane(goodsPane);
@@ -248,7 +251,7 @@ public class OrderFormController //implements Initializable
     }
 
     public void setBackButton() {
-        mainApp.rootLayout.setCenter(MainFormController.getRootPane());
+        MainApp.rootLayout.setCenter(MainFormController.getRootPane());
     }
 
     public void setCheckout() {

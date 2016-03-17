@@ -32,8 +32,9 @@ public class MainApp extends Application {
     private static final Logger log = Logger.getLogger(MainApp.class);
     private static boolean isRROLogEnabled;
     public static BorderPane rootLayout;
-    public ArrayList<Goods> allGoodsArrayList;
-    public ArrayList<GoodsGroup> allGoodsGroupsArrayList;
+    public ArrayList<Goods> allGoodsArrayList; //вообще все возможные товары
+    public ArrayList<Goods> allSelectedGoodsArrayList; //все товары, избранные для продажи
+    public ArrayList<GoodsGroup> allGoodsGroupsArrayList; //все группы товаров
     public static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList(goodsInCheckQTY -> new Observable[]{goodsInCheckQTY.quantityProperty()});
     private static SimpleObjectProperty<BigDecimal> checkSummary;
     private Stage MainStage;

@@ -312,11 +312,11 @@ public class LoginFormController //implements Initializable
                         log.debug("Loading MainForm for main view into RootLayout");
                         FXMLLoader fxmlLoader = new FXMLLoader();
                         fxmlLoader.setLocation(MainApp.class.getResource(fxmlFormPath));
-                        log.debug("Setting location from FXML - MainFrom");
+                        log.debug("Setting location from FXML - MainForm");
                         BorderPane mainPane = fxmlLoader.load();
                         log.debug("Отображаем главную форму");
                         // Set MainForm into the center of root layout.
-                        mainApp.rootLayout.setCenter(mainPane);
+                        MainApp.rootLayout.setCenter(mainPane);
                         // Give the controller access to the main app.
                         MainFormController mainFormController = fxmlLoader.getController();
                         MainFormController.setRootPane(mainPane);

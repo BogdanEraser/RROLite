@@ -13,8 +13,8 @@ public class Goods {
     private SimpleIntegerProperty code;
     private SimpleStringProperty name;
     private SimpleStringProperty sellType;
-    private SimpleIntegerProperty sellTypeRRO;
-    private SimpleObjectProperty price;
+    private SimpleIntegerProperty sellTypeRRO; //Штучный/весовой товар (0/1)
+    private SimpleObjectProperty<BigDecimal> price;
     private SimpleIntegerProperty goodsGroup;
     private SimpleIntegerProperty taxGroup;
     private SimpleIntegerProperty discoutGroup;
@@ -90,7 +90,7 @@ public class Goods {
     }
 
     public SimpleObjectProperty<BigDecimal> priceProperty() {
-        return price;
+        return new SimpleObjectProperty<BigDecimal>(new BigDecimal(price.getValue().toString()).setScale(2,BigDecimal.ROUND_HALF_EVEN));
     }
 
     public int getGoodsGroup() {

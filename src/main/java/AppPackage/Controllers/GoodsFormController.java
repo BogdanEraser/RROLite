@@ -83,9 +83,9 @@ public class GoodsFormController //implements Initializable
 
         setMainApp(OrderFormController.getMainApp());
         goodsInSelectedGroup = new ArrayList<>();
-        for (int j = 0; j < mainApp.allGoodsArrayList.size(); j++) {
-            if (mainApp.allGoodsArrayList.get(j).getGoodsGroup() == GoodsFormController.getSelectedGroup()) {
-                goodsInSelectedGroup.add(mainApp.allGoodsArrayList.get(j));
+        for (int j = 0; j < mainApp.allSelectedGoodsArrayList.size(); j++) {
+            if (mainApp.allSelectedGoodsArrayList.get(j).getGoodsGroup() == GoodsFormController.getSelectedGroup()) {
+                goodsInSelectedGroup.add(mainApp.allSelectedGoodsArrayList.get(j));
             }
         }
         int col = 0;
@@ -155,11 +155,11 @@ public class GoodsFormController //implements Initializable
                 //подсчитаем общий итог по чеку
                 MainApp.checkSummaryProperty().setValue(new BigDecimal(OrderFormController.getGlobalSumOnCheck().toString()));
 
-                mainApp.rootLayout.setCenter(OrderFormController.getRootPane());
+                MainApp.rootLayout.setCenter(OrderFormController.getRootPane());
 
             });
             btn.setPrefWidth(250);
-            btn.setPrefHeight(110);
+            btn.setPrefHeight(105);
             btn.setFont(Font.font("Verdana", 20));
             btn.setWrapText(true);
             btn.setTextOverrun(OverrunStyle.CLIP);
@@ -178,10 +178,10 @@ public class GoodsFormController //implements Initializable
         btn.setText("Отмена");
         btn.setId(btn.hashCode() + btn.getText());
         btn.setOnAction(innerEvent -> {
-            mainApp.rootLayout.setCenter(OrderFormController.getRootPane());
+            MainApp.rootLayout.setCenter(OrderFormController.getRootPane());
         });
         btn.setPrefWidth(250);
-        btn.setPrefHeight(110);
+        btn.setPrefHeight(105);
         btn.setFont(Font.font("Verdana", 22));
         btn.setWrapText(true);
         btn.setTextOverrun(OverrunStyle.CLIP);

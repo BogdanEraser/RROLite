@@ -94,13 +94,20 @@ public class MainFormController //implements Initializable
 
     @FXML
     public void initialize() {
+
         log.debug("Initialising mainForm");
-        lblRROSumCash.setText("Сумма оплат наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO());
-        lblRROSumCredit.setText("Сумма оплат кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO());
+        if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
+            lblRROSumCash.setText("Сумма оплат наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO());
+            lblRROSumCredit.setText("Сумма оплат кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO());
+        }
+        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
         lblMessage.setText("Пользователь: " + CurrentUser.getInstance().getName());
 
-        if (CurrentUser.getInstance().getAccessLevel()<2) {btnSetupRRO.setVisible(true);}
-        else {btnSetupRRO.setVisible(false);}
+        if (CurrentUser.getInstance().getAccessLevel() < 2) {
+            btnSetupRRO.setVisible(true);
+        } else {
+            btnSetupRRO.setVisible(false);
+        }
 
         currentTime = LocalTime.now();
         lblTime.setText("Сейчас: " + currentTime.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM)));
@@ -147,7 +154,7 @@ public class MainFormController //implements Initializable
             int rowEnd = 37;
             int idx = 0;
             boolean isGroupExists;
-            mainApp.allGoodsArrayList = new ArrayList<>();
+            mainApp.allSelectedGoodsArrayList = new ArrayList<>();
             mainApp.allGoodsGroupsArrayList = new ArrayList<>();
             for (int i = 1; i < 21; i++) { //цикл по группам товаров
 
@@ -185,12 +192,12 @@ public class MainFormController //implements Initializable
 
                 for (int rowNum = rowStart; rowNum < rowEnd; rowNum++) {
                     r = sheet.getRow(rowNum);
-                    if (r == null) {
+                    if (r.getCell(0, Row.RETURN_BLANK_AS_NULL) == null) {
                         // This whole row is empty
                         //continue;
-                        break; //при пропусках строки в группе выходим из импорта данной группы
+                        break; //при пропусках строки (код товара пустой) выходим из импорта
                     }
-                    mainApp.allGoodsArrayList.add(new Goods()); //не пустая строка - добавляем новый элемент в список для импорта
+                    mainApp.allSelectedGoodsArrayList.add(new Goods()); //не пустая строка - добавляем новый элемент в список для импорта
                     //до 9 столбцов
                     for (int cn = 0; cn < 9; cn++) {
                         cell = r.getCell(cn, Row.RETURN_BLANK_AS_NULL);
@@ -199,136 +206,136 @@ public class MainFormController //implements Initializable
                                 case 0: //goods code
                                     switch (evaluator.evaluateInCell(cell).getCellType()) {
                                         case Cell.CELL_TYPE_NUMERIC:
-                                            mainApp.allGoodsArrayList.get(idx).setCode((int) cell.getNumericCellValue());
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setCode((int) cell.getNumericCellValue());
                                             break;
                                         case Cell.CELL_TYPE_STRING:
-                                            mainApp.allGoodsArrayList.get(idx).setCode(Integer.parseInt(cell.getStringCellValue()));
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setCode(Integer.parseInt(cell.getStringCellValue()));
                                             break;
                                         case Cell.CELL_TYPE_BLANK:
-                                            mainApp.allGoodsArrayList.get(idx).setCode(0);
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setCode(0);
                                             break;
                                     }
                                     break;
                                 case 1: //goods name
                                     switch (evaluator.evaluateInCell(cell).getCellType()) {
                                         case Cell.CELL_TYPE_NUMERIC:
-                                            mainApp.allGoodsArrayList.get(idx).setName(String.valueOf(cell.getNumericCellValue()));
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setName(String.valueOf(cell.getNumericCellValue()));
                                             break;
                                         case Cell.CELL_TYPE_STRING:
-                                            mainApp.allGoodsArrayList.get(idx).setName(cell.getStringCellValue());
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setName(cell.getStringCellValue());
                                             break;
                                         case Cell.CELL_TYPE_BLANK:
-                                            mainApp.allGoodsArrayList.get(idx).setName("Н/Д");
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setName("Н/Д");
                                             break;
                                     }
                                     break;
                                 case 2: //goods sellType
                                     switch (evaluator.evaluateInCell(cell).getCellType()) {
                                         case Cell.CELL_TYPE_NUMERIC:
-                                            mainApp.allGoodsArrayList.get(idx).setSellType(String.valueOf(cell.getNumericCellValue()));
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setSellType(String.valueOf(cell.getNumericCellValue()));
                                             break;
                                         case Cell.CELL_TYPE_STRING:
-                                            mainApp.allGoodsArrayList.get(idx).setSellType(cell.getStringCellValue());
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setSellType(cell.getStringCellValue());
                                             break;
                                         case Cell.CELL_TYPE_BLANK:
-                                            mainApp.allGoodsArrayList.get(idx).setSellType("");
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setSellType("");
                                             break;
                                     }
                                     break;
                                 case 3: //goods sellTypeRRO
                                     switch (evaluator.evaluateInCell(cell).getCellType()) {
                                         case Cell.CELL_TYPE_NUMERIC:
-                                            mainApp.allGoodsArrayList.get(idx).setSellTypeRRO((int) cell.getNumericCellValue());
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setSellTypeRRO((int) cell.getNumericCellValue());
                                             break;
                                         case Cell.CELL_TYPE_STRING:
-                                            mainApp.allGoodsArrayList.get(idx).setSellTypeRRO(Integer.parseInt(cell.getStringCellValue()));
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setSellTypeRRO(Integer.parseInt(cell.getStringCellValue()));
                                             break;
                                         case Cell.CELL_TYPE_BLANK:
-                                            mainApp.allGoodsArrayList.get(idx).setSellTypeRRO(0);
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setSellTypeRRO(0);
                                             break;
                                     }
                                     break;
                                 case 4: //goods price
                                     switch (evaluator.evaluateInCell(cell).getCellType()) {
                                         case Cell.CELL_TYPE_NUMERIC:
-                                            mainApp.allGoodsArrayList.get(idx).setPrice(BigDecimal.valueOf(cell.getNumericCellValue()));
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setPrice(BigDecimal.valueOf(cell.getNumericCellValue()));
                                             break;
                                         case Cell.CELL_TYPE_STRING:
-                                            mainApp.allGoodsArrayList.get(idx).setPrice(BigDecimal.valueOf(Double.parseDouble(cell.getStringCellValue())));
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setPrice(BigDecimal.valueOf(Double.parseDouble(cell.getStringCellValue())));
                                             break;
                                         case Cell.CELL_TYPE_BLANK:
-                                            mainApp.allGoodsArrayList.get(idx).setPrice(BigDecimal.ZERO);
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setPrice(BigDecimal.ZERO);
                                             break;
                                     }
                                     break;
                                 case 5: //goods group
                                     switch (evaluator.evaluateInCell(cell).getCellType()) {
                                         case Cell.CELL_TYPE_NUMERIC:
-                                            mainApp.allGoodsArrayList.get(idx).setGoodsGroup((int) cell.getNumericCellValue());
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setGoodsGroup((int) cell.getNumericCellValue());
                                             break;
                                         case Cell.CELL_TYPE_STRING:
-                                            mainApp.allGoodsArrayList.get(idx).setGoodsGroup(Integer.parseInt(cell.getStringCellValue()));
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setGoodsGroup(Integer.parseInt(cell.getStringCellValue()));
                                             break;
                                         case Cell.CELL_TYPE_BLANK:
-                                            mainApp.allGoodsArrayList.get(idx).setGoodsGroup(20);
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setGoodsGroup(20);
                                             break;
                                     }
                                     break;
                                 case 6: //goods tax group
                                     switch (evaluator.evaluateInCell(cell).getCellType()) {
                                         case Cell.CELL_TYPE_NUMERIC:
-                                            mainApp.allGoodsArrayList.get(idx).setTaxGroup((int) cell.getNumericCellValue());
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setTaxGroup((int) cell.getNumericCellValue());
                                             break;
                                         case Cell.CELL_TYPE_STRING:
                                             switch (cell.getStringCellValue().toUpperCase()) {
                                                 case "А":
-                                                    mainApp.allGoodsArrayList.get(idx).setTaxGroup(1);
+                                                    mainApp.allSelectedGoodsArrayList.get(idx).setTaxGroup(1);
                                                     break;
                                                 case "Б":
-                                                    mainApp.allGoodsArrayList.get(idx).setTaxGroup(2);
+                                                    mainApp.allSelectedGoodsArrayList.get(idx).setTaxGroup(2);
                                                     break;
                                                 case "В":
-                                                    mainApp.allGoodsArrayList.get(idx).setTaxGroup(3);
+                                                    mainApp.allSelectedGoodsArrayList.get(idx).setTaxGroup(3);
                                                     break;
                                                 case "Г":
-                                                    mainApp.allGoodsArrayList.get(idx).setTaxGroup(4);
+                                                    mainApp.allSelectedGoodsArrayList.get(idx).setTaxGroup(4);
                                                     break;
                                                 case "Д":
-                                                    mainApp.allGoodsArrayList.get(idx).setTaxGroup(5);
+                                                    mainApp.allSelectedGoodsArrayList.get(idx).setTaxGroup(5);
                                                     break;
                                                 default:
-                                                    mainApp.allGoodsArrayList.get(idx).setTaxGroup(1);
+                                                    mainApp.allSelectedGoodsArrayList.get(idx).setTaxGroup(1);
                                                     break;
                                             }
                                             break;
                                         case Cell.CELL_TYPE_BLANK:
-                                            mainApp.allGoodsArrayList.get(idx).setTaxGroup(1);
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setTaxGroup(1);
                                             break;
                                     }
                                     break;
                                 case 7: //goods discount group
                                     switch (evaluator.evaluateInCell(cell).getCellType()) {
                                         case Cell.CELL_TYPE_NUMERIC:
-                                            mainApp.allGoodsArrayList.get(idx).setDiscoutGroup((int) cell.getNumericCellValue());
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setDiscoutGroup((int) cell.getNumericCellValue());
                                             break;
                                         case Cell.CELL_TYPE_STRING:
-                                            mainApp.allGoodsArrayList.get(idx).setDiscoutGroup(Integer.parseInt(cell.getStringCellValue()));
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setDiscoutGroup(Integer.parseInt(cell.getStringCellValue()));
                                             break;
                                         case Cell.CELL_TYPE_BLANK:
-                                            mainApp.allGoodsArrayList.get(idx).setDiscoutGroup(0);
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setDiscoutGroup(0);
                                             break;
                                     }
                                     break;
                                 case 8: //goods barcode
                                     switch (evaluator.evaluateInCell(cell).getCellType()) {
                                         case Cell.CELL_TYPE_NUMERIC:
-                                            mainApp.allGoodsArrayList.get(idx).setBarcode(String.valueOf(cell.getNumericCellValue()));
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setBarcode(String.valueOf(cell.getNumericCellValue()));
                                             break;
                                         case Cell.CELL_TYPE_STRING:
-                                            mainApp.allGoodsArrayList.get(idx).setBarcode(cell.getStringCellValue());
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setBarcode(cell.getStringCellValue());
                                             break;
                                         case Cell.CELL_TYPE_BLANK:
-                                            mainApp.allGoodsArrayList.get(idx).setBarcode("");
+                                            mainApp.allSelectedGoodsArrayList.get(idx).setBarcode("");
                                             break;
                                     }
                                     break;
@@ -342,6 +349,204 @@ public class MainFormController //implements Initializable
             }
         }
 
+        //получим ВСЕ ТОВАРЫ в список
+        sheetName = "product_all";
+        sheet = workbook.getSheet(sheetName);
+        if (sheet == null) {
+            log.debug("File " + MainApp.getPathToDataFile() + " does not have sheet " + sheetName);
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Ошибка");
+            alert.setHeaderText("Не могу открыть лист " + sheetName + " в файле " + MainApp.getPathToDataFile());
+            alert.showAndWait();
+        } else {
+            int rowStart = 3; // Decide which rows to process (с 4-го по 16004-й)
+            int rowEnd = 16004;
+            int idx = 0;
+            mainApp.allGoodsArrayList = new ArrayList<>();
+
+            for (int rowNum = rowStart; rowNum < rowEnd; rowNum++) {
+                Row r = sheet.getRow(rowNum);
+
+                if (r.getCell(0, Row.RETURN_BLANK_AS_NULL) == null) {
+                    // This whole row is empty
+                    //continue;
+                    break; //при пропусках строки (код товара пустой) выходим из импорта
+                }
+                mainApp.allGoodsArrayList.add(new Goods()); //не пустая строка - добавляем новый элемент в список для импорта
+                //до 9 столбцов
+                for (int cn = 0; cn < 9; cn++) {
+                    Cell cell = r.getCell(cn, Row.RETURN_BLANK_AS_NULL);
+                    if (cell != null) {
+                        switch (cn) {
+                            case 0: //goods code
+                                switch (evaluator.evaluateInCell(cell).getCellType()) {
+                                    case Cell.CELL_TYPE_NUMERIC:
+                                        mainApp.allGoodsArrayList.get(idx).setCode((int) cell.getNumericCellValue());
+                                        break;
+                                    case Cell.CELL_TYPE_STRING:
+                                        mainApp.allGoodsArrayList.get(idx).setCode(Integer.parseInt(cell.getStringCellValue()));
+                                        break;
+                                    case Cell.CELL_TYPE_BLANK:
+                                        mainApp.allGoodsArrayList.get(idx).setCode(0);
+                                        break;
+                                }
+                                break;
+                            case 1: //goods name
+                                switch (evaluator.evaluateInCell(cell).getCellType()) {
+                                    case Cell.CELL_TYPE_NUMERIC:
+                                        mainApp.allGoodsArrayList.get(idx).setName(String.valueOf(cell.getNumericCellValue()));
+                                        break;
+                                    case Cell.CELL_TYPE_STRING:
+                                        mainApp.allGoodsArrayList.get(idx).setName(cell.getStringCellValue());
+                                        break;
+                                    case Cell.CELL_TYPE_BLANK:
+                                        mainApp.allGoodsArrayList.get(idx).setName("Н/Д");
+                                        break;
+                                }
+                                break;
+                            case 2: //goods sellType
+                                switch (evaluator.evaluateInCell(cell).getCellType()) {
+                                    case Cell.CELL_TYPE_NUMERIC:
+                                        mainApp.allGoodsArrayList.get(idx).setSellType(String.valueOf(cell.getNumericCellValue()));
+                                        break;
+                                    case Cell.CELL_TYPE_STRING:
+                                        mainApp.allGoodsArrayList.get(idx).setSellType(cell.getStringCellValue());
+                                        break;
+                                    case Cell.CELL_TYPE_BLANK:
+                                        mainApp.allGoodsArrayList.get(idx).setSellType("");
+                                        break;
+                                }
+                                break;
+                            case 3: //goods sellTypeRRO
+                                switch (evaluator.evaluateInCell(cell).getCellType()) {
+                                    case Cell.CELL_TYPE_NUMERIC:
+                                        mainApp.allGoodsArrayList.get(idx).setSellTypeRRO((int) cell.getNumericCellValue());
+                                        break;
+                                    case Cell.CELL_TYPE_STRING:
+                                        mainApp.allGoodsArrayList.get(idx).setSellTypeRRO(Integer.parseInt(cell.getStringCellValue()));
+                                        break;
+                                    case Cell.CELL_TYPE_BLANK:
+                                        mainApp.allGoodsArrayList.get(idx).setSellTypeRRO(0);
+                                        break;
+                                }
+                                break;
+                            case 4: //goods price
+                                switch (evaluator.evaluateInCell(cell).getCellType()) {
+                                    case Cell.CELL_TYPE_NUMERIC:
+                                        mainApp.allGoodsArrayList.get(idx).setPrice(BigDecimal.valueOf(cell.getNumericCellValue()));
+                                        break;
+                                    case Cell.CELL_TYPE_STRING:
+                                        mainApp.allGoodsArrayList.get(idx).setPrice(BigDecimal.valueOf(Double.parseDouble(cell.getStringCellValue())));
+                                        break;
+                                    case Cell.CELL_TYPE_BLANK:
+                                        mainApp.allGoodsArrayList.get(idx).setPrice(BigDecimal.ZERO);
+                                        break;
+                                }
+                                break;
+                            case 5: //goods group
+                                switch (evaluator.evaluateInCell(cell).getCellType()) {
+                                    case Cell.CELL_TYPE_NUMERIC:
+                                        mainApp.allGoodsArrayList.get(idx).setGoodsGroup((int) cell.getNumericCellValue());
+                                        break;
+                                    case Cell.CELL_TYPE_STRING:
+                                        mainApp.allGoodsArrayList.get(idx).setGoodsGroup(Integer.parseInt(cell.getStringCellValue()));
+                                        break;
+                                    case Cell.CELL_TYPE_BLANK:
+                                        mainApp.allGoodsArrayList.get(idx).setGoodsGroup(20);
+                                        break;
+                                }
+                                break;
+                            case 6: //goods tax group
+                                switch (evaluator.evaluateInCell(cell).getCellType()) {
+                                    case Cell.CELL_TYPE_NUMERIC:
+                                        mainApp.allGoodsArrayList.get(idx).setTaxGroup((int) cell.getNumericCellValue());
+                                        break;
+                                    case Cell.CELL_TYPE_STRING:
+                                        switch (cell.getStringCellValue().toUpperCase()) {
+                                            case "А":
+                                                mainApp.allGoodsArrayList.get(idx).setTaxGroup(1);
+                                                break;
+                                            case "Б":
+                                                mainApp.allGoodsArrayList.get(idx).setTaxGroup(2);
+                                                break;
+                                            case "В":
+                                                mainApp.allGoodsArrayList.get(idx).setTaxGroup(3);
+                                                break;
+                                            case "Г":
+                                                mainApp.allGoodsArrayList.get(idx).setTaxGroup(4);
+                                                break;
+                                            case "Д":
+                                                mainApp.allGoodsArrayList.get(idx).setTaxGroup(5);
+                                                break;
+                                            default:
+                                                mainApp.allGoodsArrayList.get(idx).setTaxGroup(1);
+                                                break;
+                                        }
+                                        break;
+                                    case Cell.CELL_TYPE_BLANK:
+                                        mainApp.allGoodsArrayList.get(idx).setTaxGroup(1);
+                                        break;
+                                }
+                                break;
+                            case 7: //goods discount group
+                                switch (evaluator.evaluateInCell(cell).getCellType()) {
+                                    case Cell.CELL_TYPE_NUMERIC:
+                                        mainApp.allGoodsArrayList.get(idx).setDiscoutGroup((int) cell.getNumericCellValue());
+                                        break;
+                                    case Cell.CELL_TYPE_STRING:
+                                        mainApp.allGoodsArrayList.get(idx).setDiscoutGroup(Integer.parseInt(cell.getStringCellValue()));
+                                        break;
+                                    case Cell.CELL_TYPE_BLANK:
+                                        mainApp.allGoodsArrayList.get(idx).setDiscoutGroup(0);
+                                        break;
+                                }
+                                break;
+                            case 8: //goods barcode
+                                switch (evaluator.evaluateInCell(cell).getCellType()) {
+                                    case Cell.CELL_TYPE_NUMERIC:
+                                        mainApp.allGoodsArrayList.get(idx).setBarcode(String.valueOf(cell.getNumericCellValue()));
+                                        break;
+                                    case Cell.CELL_TYPE_STRING:
+                                        mainApp.allGoodsArrayList.get(idx).setBarcode(cell.getStringCellValue());
+                                        break;
+                                    case Cell.CELL_TYPE_BLANK:
+                                        mainApp.allGoodsArrayList.get(idx).setBarcode("");
+                                        break;
+                                }
+                                break;
+                        }
+                    }
+                }
+                idx++;
+            }
+        }
+
+
+        if (mainApp.allGoodsArrayList.size() > 0) {
+            //добавляем в РРО недостающие товары
+            if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
+                int code;
+                int taxGroup;
+                int sellTypeRRO;
+                String name;
+                for (Goods goods : mainApp.allGoodsArrayList) {
+                    code = goods.getCode();
+                    taxGroup = goods.getTaxGroup();
+                    sellTypeRRO =goods.getSellTypeRRO();
+                    name = goods.getName();
+                    if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).addGoodsToRRO(code, taxGroup, sellTypeRRO, name)) {
+                        //добавление товар в РРО неуспешно
+                        Alert alert = new Alert(Alert.AlertType.WARNING);
+                        alert.setTitle("Ошибка");
+                        alert.setHeaderText("Невозможно добавить(обновить) товар в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
+                        //TODO добавить расшифровку описания ошибки при невозможности обновить товар
+                        alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                        alert.showAndWait();
+                    }
+                }
+            }
+            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+        }
 
         try {
             String fxmlFormPath = "/fxml/OrderForm/OrderForm.fxml";
@@ -352,7 +557,7 @@ public class MainFormController //implements Initializable
             BorderPane orderPane = fxmlLoader.load();
             log.debug("Отображаем форму заказов");
             // Set OrderForm into the center of root layout.
-            mainApp.rootLayout.setCenter(orderPane);
+            MainApp.rootLayout.setCenter(orderPane);
             // Give the controller access to the main app.
             OrderFormController orderFormController = fxmlLoader.getController();
             OrderFormController.setRootPane(orderPane);
