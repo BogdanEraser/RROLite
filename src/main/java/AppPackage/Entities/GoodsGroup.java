@@ -1,9 +1,11 @@
 package AppPackage.Entities;
 
+import java.io.Serializable;
+
 /**
  * Created by Eraser on 03.03.2016.
  */
-public class GoodsGroup {
+public class GoodsGroup implements Serializable {
     private int code;
     private String name;
 

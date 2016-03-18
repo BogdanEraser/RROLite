@@ -8,10 +8,15 @@ import javafx.scene.control.Alert;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -183,10 +188,19 @@ public class CurrentRRO {
 
     //TODO где то проверять файл с серийным номером
     public boolean openPortMiniFP() {
-        if (!MainApp.isRROLogEnabled()) {
-            Dispatch.call((Dispatch) rro_object, getDllName(), "set_error_log;0;"); //отключаем лог ошибок драйвера принтера}
-        } else {
+        if (MainApp.isRROLogEnabled()) {
+            //получим путь расположения jar и зададим его для хранения лога от дравйвера принтера
+            String pathToJar = MainApp.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            try {
+                pathToJar = URLDecoder.decode(pathToJar, "utf-8");
+            } catch (UnsupportedEncodingException e) {
+                log.debug("unable to decode path to jar" + e.toString());
+            }
+            pathToJar = pathToJar.substring(1, pathToJar.lastIndexOf("/"));
+            Dispatch.call((Dispatch) rro_object, getDllName(), "set_dir;" + pathToJar + ";");
             Dispatch.call((Dispatch) rro_object, getDllName(), "set_error_log;1;");
+        } else {
+            Dispatch.call((Dispatch) rro_object, getDllName(), "set_error_log;0;");  //отключаем лог ошибок драйвера принтера}
         }
         Dispatch.call((Dispatch) rro_object, getDllName(), "open_port;" + port + ";" + speed);  //выполняем команду открытия порта
         setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
@@ -249,11 +263,11 @@ public class CurrentRRO {
             }
             case 1: { //мини-фп
                 //if (openPortMiniFP()) {
-                    if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_cashbox_sum;").toString())) {
-                        setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
-                        cash = new BigDecimal(Arrays.asList(getLastResult().split(";")).get(1)); //par1 - наличные
-                //    }
-                //    closePortMiniFP();
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_cashbox_sum;").toString())) {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    cash = new BigDecimal(Arrays.asList(getLastResult().split(";")).get(1)); //par1 - наличные
+                    //    }
+                    //    closePortMiniFP();
                 }
                 break;
             }
@@ -275,11 +289,11 @@ public class CurrentRRO {
             }
             case 1: { //мини-фп
                 //if (openPortMiniFP()) {
-                    if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_cashbox_sum;").toString())) {
-                        setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
-                        cc = new BigDecimal(Arrays.asList(getLastResult().split(";")).get(3)); //par3 - кредитная карта
-                //    }
-                //    closePortMiniFP();
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_cashbox_sum;").toString())) {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    cc = new BigDecimal(Arrays.asList(getLastResult().split(";")).get(3)); //par3 - кредитная карта
+                    //    }
+                    //    closePortMiniFP();
                 }
                 break;
             }
@@ -301,12 +315,12 @@ public class CurrentRRO {
             case 0: {
             }
             case 1: { //мини-фп
-                //if (openPortMiniFP()) {
-                    if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_status;1;").toString())) {
-                        setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
-                        goodsOccupiedInRRO = Integer.parseInt(Arrays.asList(getLastResult().split(";")).get(17)); //par17 - Количество использованных записей в базе товаров
-                  //  }
-                  //  closePortMiniFP();
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_status;1;").toString())) {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    goodsOccupiedInRRO = Integer.parseInt(Arrays.asList(getLastResult().split(";")).get(17)); //par17 - Количество использованных записей в базе товаров
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
                 }
                 break;
             }
@@ -315,6 +329,210 @@ public class CurrentRRO {
         }
         return goodsOccupiedInRRO;
     }
+
+
+    /**
+     * Метод получения текущей даты и времени в РРО
+     *
+     * @return String
+     */
+    public String getDateTimeInRRO() {
+        StringBuilder dateTimeInRRO = new StringBuilder();
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_date_time;").toString())) {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    dateTimeInRRO.append(Arrays.asList(getLastResult().split(";")).get(1)); //par1 - Дата: (dd.mm.yyyy)
+                    dateTimeInRRO.append(" ").append(Arrays.asList(getLastResult().split(";")).get(2)); //par2 - Время: (hh:mm:ss)
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return dateTimeInRRO.toString();
+    }
+
+
+    /**
+     * Метод определения открыта ли смена в РРО
+     *
+     * @return String
+     */
+    public boolean isShiftOpened() {
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_status;1;").toString())) {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    if (Integer.parseInt(Arrays.asList(getLastResult().split(";")).get(2)) == 1) {
+                        return true;
+                    } //par2 - Смена закрыта/открыта (0/1)
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Метод задания текущего времени в РРО
+     *
+     * @return boolean
+     */
+    public boolean setDateTimeInRRO() {
+        LocalDateTime localDateTime = LocalDateTime.now();
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "set_time;" + localDateTime.getHour() + ";" + localDateTime.getMinute() + ";" + localDateTime.getSecond() + ";").toString())) {
+                    return true;
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Метод получения начала смены в РРО
+     *
+     * @return LocalDateTime
+     */
+    public LocalDateTime getShiftStartDateTimeFromRRO() {
+        LocalDateTime shiftStartDateTime = null;
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_status;1;").toString())) {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    //par11 - Дата начала смены дд.мм.гггг  par12 - Время начала смены чч:мм:сс
+                    shiftStartDateTime = LocalDateTime.parse(((Arrays.asList(getLastResult().split(";")).get(11)) + (Arrays.asList(getLastResult().split(";")).get(11))), DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM));
+                    return shiftStartDateTime;
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return shiftStartDateTime;
+    }
+
+
+    /**
+     * Метод получения точки отсчета 72 часов до блокировки по причине непередачи отчетов
+     *
+     * @return LocalDateTime
+     */
+    public LocalDateTime getPointOfNotSentFromRRO() {
+        LocalDateTime pointOfNotSentDateTime = null;
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_status;1;").toString())) {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    //par23 - Точка отсчета 72 часов до блокировки по причине непередачи отчетов , дата   дд.мм.гггг
+                    //  Если все данные переданы (дата/время блокировки не установлено), параметр будет 00.00.0000
+                    //par24 - Точка отсчета 72 часов до блокировки по причине непередачи отчетов , время   чч:мм:сс
+                    //  Если все данные переданы (дата/время блокировки не установлено), параметр будет 00:00:00
+                    if (!(Arrays.asList(getLastResult().split(";")).get(23).equals("00.00.0000")) & !(Arrays.asList(getLastResult().split(";")).get(24).equals("00:00:00"))){
+                        pointOfNotSentDateTime = LocalDateTime.parse(((Arrays.asList(getLastResult().split(";")).get(23)) + " " + (Arrays.asList(getLastResult().split(";")).get(24))), DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM));
+                        return pointOfNotSentDateTime;
+                    }
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return pointOfNotSentDateTime;
+    }
+
+
+    /**
+     * Метод определения, что длительность текущей смены не превышает 23 часа/превышает 23 часа
+     *
+     * @return boolean
+     */
+    public boolean isShiftMoreThan23Hours() {
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_status;1;").toString())) {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    //par9 - Длительность текущей смены не превышает 23 часа/превышает 23 часа (0/1) Целое число
+                    if (Integer.parseInt(Arrays.asList(getLastResult().split(";")).get(9)) == 1) {
+                        return true;
+                    }
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Метод определения, что длительность текущей смены не превышает 24 часа/превышает 24 часа
+     *
+     * @return boolean
+     */
+    public boolean isShiftMoreThan24Hours() {
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_status;1;").toString())) {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    //par10 - Длительность текущей смены не превышает 24 часа/превышает 24 часа (0/1) Целое число
+                    if (Integer.parseInt(Arrays.asList(getLastResult().split(";")).get(10)) == 1) {
+                        return true;
+                    }
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
 
     /**
      * Метод добавления товаров в базу товаров в РРО
@@ -340,8 +558,8 @@ public class CurrentRRO {
                  *  par10 Наименование товара Строка До 48 символов. Кодовая таблица WIN-1251. Разрешены символы: 20h-FFh. Символ «;» записывается как «\;»
                  *  par11 Количество (в штуках или килограммах) Число с запятой (3 знака) 0-2147483.647 Количество указывается в штуках или килограммах. Разделитель целой и дробной части – точка
                  */
-                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "add_plu;"+
-                        code+";"+taxGroup+";"+sellTypeRRO+";0;1;1;1;0.00;0;"+name+";0;").toString())) {
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "add_plu;" +
+                        code + ";" + taxGroup + ";" + sellTypeRRO + ";0;1;1;1;0.00;0;" + name + ";0;").toString())) {
                     return true;
                 } else {
                     setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
@@ -355,7 +573,7 @@ public class CurrentRRO {
         }
         return false;
     }
-    
+
     public void closePortMiniFP() {
         Dispatch.call((Dispatch) rro_object, getDllName(), "close_port");
     }

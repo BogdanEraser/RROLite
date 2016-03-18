@@ -25,6 +25,7 @@ import org.apache.poi.ss.usermodel.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -136,6 +137,112 @@ public class MainFormController //implements Initializable
     }
 
     public void setStartButton() {
+        //узнаем в каком состоянии РРО
+        if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
+            //сначала проверим, открыта ли смена в РРО
+            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).isShiftOpened()) {
+                //смена открыта
+                Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+                alertQuestion.setTitle("Подтверждение");
+                alertQuestion.setHeaderText("В РРО обнаружена открытая смена.\nПродолжаем?");
+                Optional<ButtonType> result = alertQuestion.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.CANCEL) {
+                    CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+                    log.debug("shift is open - user selected setStartButton interrupt");
+                    return; //отменяем дальнейшее выполнение метода для кнопки "Старт"
+                }
+
+                //проверим продолжительность смены в РРО
+            /*  LocalDateTime shiftStartDateTimeFromRRO = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getShiftStartDateTimeFromRRO();
+                LocalDateTime localDateTime = LocalDateTime.now();
+                if (java.time.Duration.between(localDateTime, shiftStartDateTimeFromRRO).abs().toHours() >= 24) { //продолжительность смены более 24 часов
+                    log.debug("shift duration is more than 24 hours");
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Предупреждение");
+                    alert.setHeaderText("Длительность смены превышает 24 часа.\nПредлагается закрыть смену.");
+                    alert.setContentText("Начало смены: " + shiftStartDateTimeFromRRO.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)));
+                }
+                */
+
+                //проверим, что продолжительность смены в РРО не более 23 часов
+                if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).isShiftMoreThan23Hours()) {
+                    //смена более 23 часов
+                    log.debug("shift duration is more than 23 hours");
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Предупреждение");
+                    alert.setHeaderText("Длительность смены превышает 23 часа.\nПредлагается закрыть смену.");
+                    alert.setContentText("Начало смены: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getShiftStartDateTimeFromRRO().format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)));
+                }
+
+                //проверим, что разница между датой и временем последней передачи данных и текущей датой и временем составляет не более 24 часов
+                LocalDateTime pointOfNotSentFromRRO = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getPointOfNotSentFromRRO();
+                LocalDateTime localDateTime = LocalDateTime.now();
+                if (pointOfNotSentFromRRO!=null) {
+                    if (java.time.Duration.between(localDateTime, pointOfNotSentFromRRO).abs().toHours() >= 24) { //продолжительность неотправки отчетов более 24 часов
+                        log.debug("reports was not sent more than 24 hours ago");
+                        Alert alert = new Alert(Alert.AlertType.WARNING);
+                        alert.setTitle("Предупреждение");
+                        alert.setHeaderText("Разница между датой и временем последней передачи данных и текущей датой и временем составляет не более 24 часов.");
+                        alert.setContentText("Точка отсчет до блокировки РРО: " + pointOfNotSentFromRRO.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)) +
+                                "\nРРО заблокируется:  " + pointOfNotSentFromRRO.plusHours(72));
+
+                    }
+                }
+            }
+
+
+            //затем проверим время в РРО
+            String dateTimeFromRRO = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getDateTimeInRRO();
+            if (dateTimeFromRRO.length() == 0) {
+                //строка даты из РРО пустая
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Ошибка");
+                alert.setHeaderText("Невозможно получить дату из РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
+                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                alert.showAndWait();
+            } else { //сравним время из РРО с текущими, разрешая расхождение не более 5 минут
+                LocalDateTime localDateTime = LocalDateTime.now();
+                LocalDateTime localDateTimeFromRRO = LocalDateTime.parse(dateTimeFromRRO, DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM));
+                if (java.time.Duration.between(localDateTime, localDateTimeFromRRO).abs().toMinutes() >= 5) { //расхождение во времение более 5 минут
+                    Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+                    alertQuestion.setTitle("Подтверждение");
+                    alertQuestion.setHeaderText("Время в РРО и программе различаются более чем на 5 минут\nЗадать текущее время в РРО согласно времени в программе?");
+                    alertQuestion.setContentText("В РРО: " + localDateTimeFromRRO.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)) + "\nВ программе: " + localDateTime.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)));
+                    Optional<ButtonType> result = alertQuestion.showAndWait();
+                    if (result.isPresent() && result.get() == ButtonType.OK) {
+                        if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).setDateTimeInRRO()) {
+                            //задать дату и время в РРО не удалось
+                            log.debug("unable to set datetime to RRO - setStartButton interrupt");
+                            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+                            Alert alert = new Alert(Alert.AlertType.WARNING);
+                            alert.setTitle("Ошибка");
+                            alert.setHeaderText("Невозможно задать время в РРО\nРекомендуется перезагрузить РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
+                            alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                            alert.showAndWait();
+                            //return; //отменяем дальнейшее выполнение метода для кнопки "Старт"
+                        } else {
+                            log.debug("successfully have set time to RRO - setStartButton interrupt");
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                            alert.setTitle("Сообщение");
+                            alert.setHeaderText("Время в РРО успешно обновлено");
+                            alert.setContentText("Необходимо перезагрузить РРО");
+                            alert.showAndWait();
+                            //return; //отменяем дальнейшее выполнение метода для кнопки "Старт"
+                        }
+                    } else {
+                        if (java.time.Duration.between(localDateTime, localDateTimeFromRRO).abs().toMinutes() > 90) { //расхождение во времение более 90 минут
+                            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+                            log.debug("datetime difference > 90 minutes - setStartButton interrupt ");
+                            return; //отменяем дальнейшее выполнение метода для кнопки "Старт"
+                        }
+                    }
+                }
+            }
+
+        }
+        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+
+
         // получаем данные о товарах из файла экселя
         Workbook workbook = ExcelUtils.getWorkbookFromExcelFile(MainApp.getPathToDataFile());  //получаем книгу экселя
 
@@ -532,7 +639,7 @@ public class MainFormController //implements Initializable
                 for (Goods goods : mainApp.allGoodsArrayList) {
                     code = goods.getCode();
                     taxGroup = goods.getTaxGroup();
-                    sellTypeRRO =goods.getSellTypeRRO();
+                    sellTypeRRO = goods.getSellTypeRRO();
                     name = goods.getName();
                     if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).addGoodsToRRO(code, taxGroup, sellTypeRRO, name)) {
                         //добавление товар в РРО неуспешно

@@ -4,12 +4,13 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
  * Created by Eraser on 03.03.2016.
  */
-public class Goods {
+public class Goods  implements Serializable {
     private SimpleIntegerProperty code;
     private SimpleStringProperty name;
     private SimpleStringProperty sellType;
