@@ -3,6 +3,7 @@ package AppPackage.Controllers;
 import AppPackage.Entities.CurrentUser;
 import AppPackage.Entities.User;
 import AppPackage.MainApp;
+import AppPackage.RRO.CurrentRRO;
 import AppPackage.Utils.ExcelUtils;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -308,6 +309,19 @@ public class LoginFormController //implements Initializable
                 if (Integer.parseInt(txtPassword.getText()) == user.getPswd()) {
                     try {
                         CurrentUser.getInstance(user.getName(), user.getPswd(), user.getAccessLevel());
+                        if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
+                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).cashierRegister(user.getName())) {
+                                //регистрация кассира не удалась
+                                log.debug("unable register cashier in RRO - setBtnLogin interrupt");
+                                Alert alert = new Alert(Alert.AlertType.WARNING);
+                                alert.setTitle("Ошибка");
+                                alert.setHeaderText("Не удалось зарегистрировать кассира в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
+                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                                alert.showAndWait();
+                                return; //отменяем дальнейшее выполнение метода для кнопки "ОК"
+                            }
+                        }
+                        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
                         String fxmlFormPath = "/fxml/MainForm/MainForm.fxml";
                         log.debug("Loading MainForm for main view into RootLayout");
                         FXMLLoader fxmlLoader = new FXMLLoader();

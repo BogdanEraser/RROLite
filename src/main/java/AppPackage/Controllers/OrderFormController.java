@@ -7,6 +7,8 @@ import AppPackage.Utils.CheckInternetConnnection;
 import com.sun.javafx.scene.control.skin.TableHeaderRow;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -126,8 +128,8 @@ public class OrderFormController //implements Initializable
     public void initialize() {
         log.debug("Initialising MainForm");
         if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
-            lblRROSumCash.setText("Сумма оплат наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO());
-            lblRROSumCredit.setText("Сумма оплат кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO());
+            lblRROSumCash.setText("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO());
+            lblRROSumCredit.setText("Кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO());
         }
         CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
         if (CheckInternetConnnection.getInstance().isConnected()) {
@@ -161,10 +163,7 @@ public class OrderFormController //implements Initializable
             btn.setId(btn.hashCode() + mainApp.allGoodsGroupsArrayList.get(i).getName());
             final int finalI = i;
             btn.setOnAction(innerEvent -> {
-                log.debug("нажали кнопку " + mainApp.allGoodsGroupsArrayList.get(finalI).getName());
-
                 GoodsFormController.setSelectedGroup(mainApp.allGoodsGroupsArrayList.get(finalI).getCode());
-
                 try {
                     String fxmlFormPath = "/fxml/GoodsForm/GoodsForm.fxml";
                     log.debug("Loading GroupForm for selecting goods into RootLayout");
@@ -215,7 +214,6 @@ public class OrderFormController //implements Initializable
             });
         });
 
-        //checkTableViewNotFXML = checkTableView;
         /*WITHOUT LAMBDA
         goodsNameColumn = new TableColumn<GoodsInCheck,String>();
         goodsNameColumn.setCellValueFactory(new PropertyValueFactory<GoodsInCheck,String>("name"));
@@ -223,11 +221,10 @@ public class OrderFormController //implements Initializable
         goodsPriceColumn.setCellValueFactory(new PropertyValueFactory<GoodsInCheck,BigDecimal>("price"));
         */
 
-        goodsNameColumn.setCellValueFactory(cellData -> cellData.getValue().getGoods().nameProperty());
-        //goodsNameColumn.setStyle("-fx-alignment: CENTER-LEFT; -fx-font-size: 21; -fx-font-weight: bold");
+        goodsNameColumn.setCellValueFactory(cellData -> new ReadOnlyStringWrapper(cellData.getValue().getGoods().getName()));
         goodsNameColumn.setStyle("-fx-alignment: CENTER-LEFT; -fx-font-size: 21");
         String tblColStyle = "-fx-alignment: CENTER-RIGHT; -fx-font-size: 21";
-        goodsPriceColumn.setCellValueFactory(cellData -> cellData.getValue().getGoods().priceProperty());
+        goodsPriceColumn.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<BigDecimal>(cellData.getValue().getGoods().getPrice()));
         goodsPriceColumn.setStyle(tblColStyle);
         goodsQtyColumn.setCellValueFactory(cellData -> cellData.getValue().quantityProperty());
         goodsQtyColumn.setStyle(tblColStyle);

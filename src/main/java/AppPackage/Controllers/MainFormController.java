@@ -10,17 +10,16 @@ import AppPackage.Utils.ExcelUtils;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.util.Duration;
 import org.apache.log4j.Logger;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.*;
 
 import java.io.IOException;
@@ -60,6 +59,10 @@ public class MainFormController //implements Initializable
     private ImageView ConnectedIcon;
     @FXML
     private ImageView NotConnectedIcon;
+    @FXML
+    private Label lblProgress;
+    @FXML
+    private ProgressIndicator progressIndicator;
     private ResourceBundle bundle;
 
     public MainFormController() {
@@ -98,8 +101,8 @@ public class MainFormController //implements Initializable
 
         log.debug("Initialising mainForm");
         if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
-            lblRROSumCash.setText("Сумма оплат наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO());
-            lblRROSumCredit.setText("Сумма оплат кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO());
+            lblRROSumCash.setText("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO());
+            lblRROSumCredit.setText("Кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO());
         }
         CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
         lblMessage.setText("Пользователь: " + CurrentUser.getInstance().getName());
@@ -140,7 +143,7 @@ public class MainFormController //implements Initializable
         //узнаем в каком состоянии РРО
         if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
             //сначала проверим, открыта ли смена в РРО
-            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).isShiftOpened()) {
+            if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).isShiftOpened()) {
                 //смена открыта
                 Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
                 alertQuestion.setTitle("Подтверждение");
@@ -177,14 +180,14 @@ public class MainFormController //implements Initializable
                 //проверим, что разница между датой и временем последней передачи данных и текущей датой и временем составляет не более 24 часов
                 LocalDateTime pointOfNotSentFromRRO = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getPointOfNotSentFromRRO();
                 LocalDateTime localDateTime = LocalDateTime.now();
-                if (pointOfNotSentFromRRO!=null) {
+                if (pointOfNotSentFromRRO != null) {
                     if (java.time.Duration.between(localDateTime, pointOfNotSentFromRRO).abs().toHours() >= 24) { //продолжительность неотправки отчетов более 24 часов
                         log.debug("reports was not sent more than 24 hours ago");
                         Alert alert = new Alert(Alert.AlertType.WARNING);
                         alert.setTitle("Предупреждение");
-                        alert.setHeaderText("Разница между датой и временем последней передачи данных и текущей датой и временем составляет не более 24 часов.");
+                        alert.setHeaderText("Разница между датой и временем последней передачи данных и текущей датой и временем составляет более 24 часов.");
                         alert.setContentText("Точка отсчет до блокировки РРО: " + pointOfNotSentFromRRO.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)) +
-                                "\nРРО заблокируется:  " + pointOfNotSentFromRRO.plusHours(72));
+                                "\nРРО заблокируется:  " + pointOfNotSentFromRRO.plusHours(72).format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)));
 
                     }
                 }
@@ -225,7 +228,7 @@ public class MainFormController //implements Initializable
                             Alert alert = new Alert(Alert.AlertType.INFORMATION);
                             alert.setTitle("Сообщение");
                             alert.setHeaderText("Время в РРО успешно обновлено");
-                            alert.setContentText("Необходимо перезагрузить РРО");
+                            alert.setContentText("Рекомендуется перезагрузить РРО");
                             alert.showAndWait();
                             //return; //отменяем дальнейшее выполнение метода для кнопки "Старт"
                         }
@@ -233,6 +236,11 @@ public class MainFormController //implements Initializable
                         if (java.time.Duration.between(localDateTime, localDateTimeFromRRO).abs().toMinutes() > 90) { //расхождение во времение более 90 минут
                             CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
                             log.debug("datetime difference > 90 minutes - setStartButton interrupt ");
+                            Alert alert = new Alert(Alert.AlertType.WARNING);
+                            alert.setTitle("Ошибка");
+                            alert.setHeaderText("Время в РРО и программе различаются более чем на 1,5 часа\nК сожалению, дальнейшая работа невозможна");
+                            alert.setContentText("Рекомендуется обратиться к администратору\nСлужебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                            alert.showAndWait();
                             return; //отменяем дальнейшее выполнение метода для кнопки "Старт"
                         }
                     }
@@ -628,32 +636,92 @@ public class MainFormController //implements Initializable
             }
         }
 
-
+        Thread addpluThread = null;
         if (mainApp.allGoodsArrayList.size() > 0) {
             //добавляем в РРО недостающие товары
-            if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
-                int code;
-                int taxGroup;
-                int sellTypeRRO;
-                String name;
-                for (Goods goods : mainApp.allGoodsArrayList) {
-                    code = goods.getCode();
-                    taxGroup = goods.getTaxGroup();
-                    sellTypeRRO = goods.getSellTypeRRO();
-                    name = goods.getName();
-                    if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).addGoodsToRRO(code, taxGroup, sellTypeRRO, name)) {
-                        //добавление товар в РРО неуспешно
-                        Alert alert = new Alert(Alert.AlertType.WARNING);
-                        alert.setTitle("Ошибка");
-                        alert.setHeaderText("Невозможно добавить(обновить) товар в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
-                        //TODO добавить расшифровку описания ошибки при невозможности обновить товар
-                        alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
-                        alert.showAndWait();
+            Task task = new Task<Void>() {
+                @Override
+                public Void call() {
+                    int code;
+                    int taxGroup;
+                    int sellTypeRRO;
+                    String name;
+                    int maxProgress = mainApp.allGoodsArrayList.size();
+                    int currentProgress = 0;
+                    if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
+                        for (Goods goods : mainApp.allGoodsArrayList) {
+                            code = goods.getCode();
+                            taxGroup = goods.getTaxGroup();
+                            sellTypeRRO = goods.getSellTypeRRO();
+                            name = goods.getName();
+
+                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).addGoodsToRRO(code, taxGroup, sellTypeRRO, name)) {
+                                //добавление товар в РРО неуспешно
+                                log.debug("unable to add goods to RRO");
+                                Alert alert = new Alert(Alert.AlertType.WARNING);
+                                alert.setTitle("Ошибка");
+                                alert.setHeaderText("Невозможно добавить(обновить) товар в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
+                                //TODO добавить расшифровку описания ошибки при невозможности обновить товар
+                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult()
+                                        + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastEvent());
+                                alert.showAndWait();
+                            }
+                            currentProgress++;
+                            updateProgress(currentProgress, maxProgress);
+                        }
                     }
+                    CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+                    return null;
+                }
+            };
+
+            progressIndicator.progressProperty().bind(task.progressProperty());
+            progressIndicator.setVisible(true);
+            lblProgress.setVisible(true);
+            addpluThread = new Thread(task);
+            log.debug("thread 'add_plu' started");
+            addpluThread.start();
+
+        }
+
+        if (addpluThread != null) {
+            while (addpluThread.isAlive()) {
+                try {
+                    Thread.sleep(10);
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Сообщение");
+                    alert.setHeaderText("Обновление товаров в РРО. Подождите...");
+                    alert.showAndWait();
+                } catch (InterruptedException e) {
+                    log.debug("thread 'add_plu' interrupted " + e.toString());
                 }
             }
-            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+            log.debug("thread 'add_plu' finished");
         }
+
+
+        //сохраняем в файл выбранные товари и группы (сериализация)
+       /* Thread saveSelectedGoodsAndGroupsToFileThread = new Thread(() -> {
+            String goodsGroupsFilePath = "gdsgrps.ser";
+            String selectedGoodsFilePath = "selgds.ser";
+            try {
+                log.debug("serializing goods groups to file");
+                ObjectOutputStream out= new ObjectOutputStream(Files.newOutputStream(Paths.get(goodsGroupsFilePath)));
+                out.writeObject(mainApp.allGoodsGroupsArrayList);
+                out.flush();
+                out.close();
+
+                log.debug("serializing selected goods to file");
+                out= new ObjectOutputStream(Files.newOutputStream(Paths.get(selectedGoodsFilePath)));
+                out.writeObject(mainApp.allSelectedGoodsArrayList);
+                out.flush();
+                out.close();
+            } catch (IOException e) {
+                log.debug("error while serializing selected goods and goods groups to file " + e.toString());
+            }
+        });
+        saveSelectedGoodsAndGroupsToFileThread.start();    //Запуск потока
+        */
 
         try {
             String fxmlFormPath = "/fxml/OrderForm/OrderForm.fxml";
@@ -670,6 +738,8 @@ public class MainFormController //implements Initializable
             OrderFormController.setRootPane(orderPane);
             orderFormController.setMainApp(mainApp);
             orderFormController.setScene(mainApp.getMainStage().getScene());
+            progressIndicator.setVisible(false);
+            lblProgress.setVisible(false);
         } catch (IOException e) {
             log.debug("Ошибка загрузки формы заказов " + e.toString());
         }

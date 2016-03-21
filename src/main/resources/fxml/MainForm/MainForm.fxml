@@ -79,15 +79,29 @@
                   </Label>
                </children>
             </VBox>
+            <HBox alignment="CENTER" spacing="20.0" GridPane.columnIndex="2">
+               <children>
+                  <Label fx:id="lblProgress" text="Обновляю данные в РРО" textOverrun="CLIP" visible="false">
+                     <font>
+                        <Font size="20.0" />
+                     </font>
+                  </Label>
+                  <ProgressIndicator fx:id="progressIndicator" prefWidth="50.0" progress="0.0" visible="false">
+                     <HBox.margin>
+                        <Insets bottom="2.0" top="2.0" />
+                     </HBox.margin>
+                  </ProgressIndicator>
+               </children>
+            </HBox>
          </children>
          <columnConstraints>
             <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="10.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
             <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" />
          </columnConstraints>
          <rowConstraints>
-            <RowConstraints valignment="CENTER" vgrow="SOMETIMES" />
+            <RowConstraints maxHeight="-Infinity" minHeight="-Infinity" prefHeight="70.0" valignment="CENTER" vgrow="SOMETIMES" />
          </rowConstraints>
       </GridPane>
     </top>

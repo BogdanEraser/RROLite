@@ -181,7 +181,7 @@ public class CurrentRRO {
      *
      * @return в случае успеха - возвращается модель принтера.
      * иначе -если устройство находится в состоянии ошибки,
-     * то в ответ вернется код ошибки
+     * то в ответном сообщении вернется код ошибки
      * (если ошибок несколько, то отобразится наименьшая в десятичном формате),
      * а через точку с запятой результат команды get_sys_monitor.
      */
@@ -239,11 +239,12 @@ public class CurrentRRO {
             }
         } else {
             setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+            setLastEvent(Dispatch.call((Dispatch) rro_object, "get_last_event").toString());
             log.debug("Printer port not opened: " + getLastResult());
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Ошибка");
             alert.setHeaderText("Невозможно открыть порт регистратора\nОписание ошибки: " + errorCodesHashMap.get(getLastError()));
-            alert.setContentText("Пожалуйста, проверьте настройки порта или подключение принтера\n" + "Служебная информация: " + getLastResult());
+            alert.setContentText("Пожалуйста, проверьте настройки порта или подключение принтера\n" + "Служебная информация: " + getLastResult() + " {" + getLastEvent() + "}");
             alert.showAndWait();
             return false;
         }
@@ -459,7 +460,7 @@ public class CurrentRRO {
                     //  Если все данные переданы (дата/время блокировки не установлено), параметр будет 00.00.0000
                     //par24 - Точка отсчета 72 часов до блокировки по причине непередачи отчетов , время   чч:мм:сс
                     //  Если все данные переданы (дата/время блокировки не установлено), параметр будет 00:00:00
-                    if (!(Arrays.asList(getLastResult().split(";")).get(23).equals("00.00.0000")) & !(Arrays.asList(getLastResult().split(";")).get(24).equals("00:00:00"))){
+                    if (!(Arrays.asList(getLastResult().split(";")).get(23).equals("00.00.0000")) & !(Arrays.asList(getLastResult().split(";")).get(24).equals("00:00:00"))) {
                         pointOfNotSentDateTime = LocalDateTime.parse(((Arrays.asList(getLastResult().split(";")).get(23)) + " " + (Arrays.asList(getLastResult().split(";")).get(24))), DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM));
                         return pointOfNotSentDateTime;
                     }
@@ -535,9 +536,138 @@ public class CurrentRRO {
 
 
     /**
+     * Метод определения статуса чека в РРО
+     *
+     * @return boolean
+     */
+    public int getReceiptStatusFromRRO() {
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                /*par3 Состояние чека (Целое число):
+                 *   0 – Чек закрыт
+                 *   1 – Чек открыт для продажи
+                 *   2 – Чек открыт только для оплаты
+                 *   3 – Чек открыт для возврата
+                 */
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_status;1;").toString())) {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    return Integer.parseInt(Arrays.asList(getLastResult().split(";")).get(3));
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return 99;
+    }
+
+
+    /**
+     * Метод регистрации кассира и задание его имени в таблице внутренней памяти РРО
+     *
+     * @return boolean
+     */
+    public boolean cashierRegister(String name) {
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                /*
+                 *  par1  Номер кассира Целое число 1-8/15 (номер кассира) 0 – отмена регистрации кассира
+                 *  par2  Пароль кассира Целое число 0-999999999 Пустой пароль – 0. При отмене регистрации ввести 0 (ноль)
+                 *
+                 *  write_table;par1;par2;par3; [par4]; … ; [parX]; Запись в таблицу настроек
+                 *         3 Имена кассиров 24
+                 *  par1  Номер таблицы Целое число
+                 *  par2  Номер ряда таблицы Целое число
+                 *  par3-parX Данные для записи в таблицу Строка
+                 */
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "cashier_registration;1;0;").toString())) {
+                    if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "write_table;3;1;" + name+";").toString())) {
+                        return true;
+                    } else {
+                        setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                        setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                        setLastEvent(Dispatch.call((Dispatch) rro_object, "get_last_event").toString());
+                    }
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                    setLastEvent(Dispatch.call((Dispatch) rro_object, "get_last_event").toString());
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Метод открытия чека в РРО
+     *
+     * @return boolean
+     */
+    public boolean openReceipt(int addDel) {
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                /*  open_receipt Открыть чек
+                 *  par1  Открыть чек продажи/возврата (0/1) Целое число
+                 */
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "open_receipt;" + addDel + ";").toString())) {
+                    return true;
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                    setLastEvent(Dispatch.call((Dispatch) rro_object, "get_last_event").toString());
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Метод отмены чека в РРО
+     *
+     * @return boolean
+     */
+    public boolean cancelReceipt() {
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "cancel_receipt;").toString())) {
+                    return true;
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                    setLastEvent(Dispatch.call((Dispatch) rro_object, "get_last_event").toString());
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
+
+    /**
      * Метод добавления товаров в базу товаров в РРО
      *
-     * @return int
+     * @return boolean
      */
     public boolean addGoodsToRRO(int code, int taxGroup, int sellTypeRRO, String name) {
         switch (getPrinterType()) {
@@ -564,6 +694,13 @@ public class CurrentRRO {
                 } else {
                     setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
                     setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                    setLastEvent(Dispatch.call((Dispatch) rro_object, "get_last_event").toString());
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Ошибка");
+                    alert.setHeaderText("Невозможно добавить(обновить) товар в РРО\nОписание ошибки: " + getLastError());
+                    //TODO добавить расшифровку описания ошибки при невозможности обновить товар
+                    alert.setContentText("Служебная информация: " + getLastResult() + " { " + getLastEvent() + " }");
+                    alert.showAndWait();
                 }
                 break;
 
@@ -573,6 +710,95 @@ public class CurrentRRO {
         }
         return false;
     }
+
+
+    /**
+     * Метод добавления товаров в чек в РРО
+     *
+     * @return boolean
+     */
+    public boolean saleGoodsToRRO(int addDel, BigDecimal qty, int code, BigDecimal price) {
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                /*  sale_plu Продажа товара
+                 *  par1  Добавить/отменить позицию в чеке (0/1) Целое число
+                 *  par2  Продажа по коду/штрих-коду (0/1) Целое число Продажа по штрих-коду не доступна для фискальных регистраторов
+                 *  par3  Продажа по запрограммированной цене/открытой цене (0/1) Целое число
+                 *  par4  Количество (в штуках или килограммах) Число с запятой (3 знака) 0.001 – 9999 Разделитель целой и дробной части – точка.
+                 *  par5  Код или штрих-код товара (в зависимости от опции в par2) Целое число Код: 1-999999 Штрих-код: 1-(1019-1)
+                 *  par6  Цена товара (в грн.) Число с запятой (2 знака)
+                 *        При отсутствии параметра продажа осуществляется по запрограммированной цене. Разделитель целой и дробной части – точка.
+                 */
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "sale_plu;" + addDel + ";0;1;" +
+                        qty.toString() + ";" + code + ";" + price.toString() + ";").toString())) {
+                    return true;
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                    setLastEvent(Dispatch.call((Dispatch) rro_object, "get_last_event").toString());
+                   /* Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Ошибка");
+                    alert.setHeaderText("Невозможно добавить(отменить) товар чеке в РРО\nОписание ошибки: " + getLastError());
+                    //TODO добавить расшифровку описания ошибки при невозможности продать товар
+                    alert.setContentText("Служебная информация: " + getLastResult() + " { " + getLastEvent() + " }");
+                    alert.showAndWait();
+                    */
+                }
+                break;
+
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Метод продажи товаров добавленных в чек в РРО
+     *
+     * @return boolean
+     */
+    public boolean payGoodsToRRO(int payType, BigDecimal summ) {
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                /*  pay   Продажа товара
+                 *  par1  Тип оплаты (0-8)
+                 *          0 – наличные
+                 *          1 – чек
+                 *          2 – магнитная карта
+                 *          3-7 – пользовательские типы оплаты Целое число
+                 *  par2  Сумма оплаты (в грн.) Число с запятой (2 знака) Разделитель целой и дробной части – точка.
+                 *          Если выставить сумму оплаты равной 0, то при выполнении сумма будет равна сумме по чеку
+                 */
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "pay;" + payType + ";" + summ.toString() + ";").toString())) {
+                    return true;
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                    setLastEvent(Dispatch.call((Dispatch) rro_object, "get_last_event").toString());
+                    /*Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Ошибка");
+                    alert.setHeaderText("Невозможно добавить(отменить) товар чеке в РРО\nОписание ошибки: " + getLastError());
+                    //TODO добавить расшифровку описания ошибки при невозможности продать товар
+                    alert.setContentText("Служебная информация: " + getLastResult() + " { " + getLastEvent() + " }");
+                    alert.showAndWait();
+                    */
+                }
+                break;
+
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
+
 
     public void closePortMiniFP() {
         Dispatch.call((Dispatch) rro_object, getDllName(), "close_port");

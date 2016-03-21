@@ -1,16 +1,28 @@
 package AppPackage.Controllers;
 
+import AppPackage.Entities.Goods;
+import AppPackage.Entities.GoodsGroup;
+import AppPackage.Entities.GoodsInCheck;
 import AppPackage.MainApp;
+import AppPackage.RRO.CurrentRRO;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 
@@ -236,8 +248,95 @@ public class PayFormController //implements Initializable
      * нажатие кнопки "наличные"
      */
     public void setPayCash() {
-        Stage stage = (Stage) btnPayCash.getScene().getWindow();
-        stage.close();
+        if ((txtValue.getText().length() != 0) & (new BigDecimal(txtValue.getText()).compareTo(new BigDecimal(0.01)) == 1)) {
+            if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
+                //сначала проверим, в каком состоянии чек
+                switch (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getReceiptStatusFromRRO()) {
+                    case 0: {//чек закрыт, открываем его
+                        if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openReceipt(0)) {
+                            //открытие чека неуспешно
+                            log.debug("unable to open receipt - payCashButton interrupt ");
+                            Alert alert = new Alert(Alert.AlertType.WARNING);
+                            alert.setTitle("Ошибка");
+                            alert.setHeaderText("Невозможно открыть чек для продажи\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
+                            alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                            alert.showAndWait();
+                            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+                            return; //отменяем дальнейшее выполнение метода для кнопки "Наличные"
+                        }
+                        for (GoodsInCheck gic : MainApp.getGoodsInCheckObservableList()) {
+                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).saleGoodsToRRO(0, gic.getQuantity(), gic.getGoods().getCode(), gic.getGoods().getPrice())) {
+                                //добавление товара в чек РРО неуспешно
+                                log.debug("unable to make 'sale_plu' to RRO - payCashButton interrupt ");
+                                Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+                                alertQuestion.setTitle("Ошибка");
+                                alertQuestion.setHeaderText("Ошибка при добавлении товара в чек\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError())
+                                        + "Отменить печать чека?");
+                                alertQuestion.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult()
+                                        + " {" + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastEvent() + "}");
+                                Optional<ButtonType> result = alertQuestion.showAndWait();
+                                if (result.isPresent() && result.get() == ButtonType.OK) {
+                                    CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).cancelReceipt();
+                                    CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+                                    return; //отменяем дальнейшее выполнение метода для кнопки "Наличные"
+                                }
+                            }
+                        }
+                        if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).payGoodsToRRO(0, new BigDecimal(txtValue.getText()).setScale(2, BigDecimal.ROUND_HALF_EVEN))) {
+                            //оплата чека неуспешно
+                            log.debug("unable to pay receipt - payCashButton interrupt ");
+                            Alert alert = new Alert(Alert.AlertType.WARNING);
+                            alert.setTitle("Ошибка");
+                            alert.setHeaderText("Невозможно сделать оплату чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
+                            alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                            alert.showAndWait();
+                            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+                            return; //отменяем дальнейшее выполнение метода для кнопки "Наличные"
+                        } else {
+                            MainApp.getGoodsInCheckObservableList().clear();  //оплата успешна, очищаем товары из чека
+                        }
+                        break;
+                    }
+                    case 2: {//чек открыт только для оплаты
+                        log.debug("receipt opened only for payment");
+                        Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+                        alertQuestion.setTitle("Подтверждение");
+                        alertQuestion.setHeaderText("Чек открыт только для оплаты\nОплатить чек или отменить печать чека?");
+                        Optional<ButtonType> result = alertQuestion.showAndWait();
+                        if (result.isPresent() && result.get() == ButtonType.OK) {
+                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).payGoodsToRRO(0, new BigDecimal(txtValue.getText()).setScale(2, BigDecimal.ROUND_HALF_EVEN))) {
+                                //оплата чека неуспешно
+                                log.debug("unable to pay receipt - payCashButton interrupt ");
+                                Alert alert = new Alert(Alert.AlertType.WARNING);
+                                alert.setTitle("Ошибка");
+                                alert.setHeaderText("Невозможно сделать оплату чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
+                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                                alert.showAndWait();
+                                CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+                                return; //отменяем дальнейшее выполнение метода для кнопки "Наличные"
+                            } else {
+                                MainApp.getGoodsInCheckObservableList().clear();  //оплата успешна, очищаем товары из чека
+                            }
+                        } else if (result.isPresent() && result.get() == ButtonType.CANCEL) {
+                            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).cancelReceipt();
+                            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+                            return; //отменяем дальнейшее выполнение метода для кнопки "Наличные"
+                        }
+                        break;
+                    }
+
+
+                }
+            }
+            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+            Stage stage = (Stage) btnPayCash.getScene().getWindow();
+            stage.close();
+        } else {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Ошибка");
+            alert.setHeaderText("Неверно указана сумма наличных от покупателя");
+            alert.showAndWait();
+        }
     }
 
     /**
@@ -252,8 +351,50 @@ public class PayFormController //implements Initializable
      * нажатие кнопки "возврат товара"
      */
     public void setGoodsReturn() {
+
+        //получаем из файла выбранные товари и группы (десериализация)
+
+     /*   for (GoodsGroup tmp : deserializeGoodsGroup()) {
+            System.out.println(tmp.getCode() + " " + tmp.getName());
+        }
+        for (Goods tmp : deserializeGoods()) {
+            System.out.println(tmp.getCode() + " " + tmp.getName() + " " + tmp.getPrice());
+        }
+    */
         Stage stage = (Stage) btnPayCash.getScene().getWindow();
         stage.close();
     }
 
+
+    public ArrayList<Goods> deserializeGoods() {
+        ArrayList<Goods> goods = null;
+        String selectedGoodsFilePath = "selgds.ser";
+        try {
+            log.debug("deserializing selected goods from file");
+            ObjectInputStream in = new ObjectInputStream(Files.newInputStream(Paths.get(selectedGoodsFilePath)));
+            goods = (ArrayList<Goods>) in.readObject();
+            in.close();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            log.debug("error while deserializing selected goods from file " + e.toString());
+        }
+        return goods;
+    }
+
+    public ArrayList<GoodsGroup> deserializeGoodsGroup() {
+        ArrayList<GoodsGroup> goodsGroups = null;
+        String goodsGroupsFilePath = "gdsgrps.ser";
+        try {
+            log.debug("deserializing goods groups from file");
+            ObjectInputStream in = new ObjectInputStream(Files.newInputStream(Paths.get(goodsGroupsFilePath)));
+            goodsGroups = (ArrayList<GoodsGroup>) in.readObject();
+            in.close();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            log.debug("error while deserializing goods group from file " + e.toString());
+        }
+        return goodsGroups;
+    }
 }

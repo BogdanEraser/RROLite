@@ -54,6 +54,10 @@ public class QtyInputFormController //implements Initializable
 
     private ResourceBundle bundle;
 
+    public Button getBtnComa() {
+        return btnComa;
+    }
+
     public QtyInputFormController() {
     }
 

@@ -98,7 +98,6 @@ public class GoodsFormController //implements Initializable
             btn.setId(btn.hashCode() + goodsInSelectedGroup.get(i).getName());
             final int finalI = i;
             btn.setOnAction(innerEvent -> {
-                log.debug("нажали кнопку " + goodsInSelectedGroup.get(finalI).getName());
 
                 //покажем форму ввода количества товара
                 try {
@@ -112,7 +111,7 @@ public class GoodsFormController //implements Initializable
                     root = fxmlLoader.load();
                     log.debug("ќтображаем форму выбора товаров");
                     stage.setScene(new Scene(root, 640, 500));
-                    stage.setTitle(goodsInSelectedGroup.get(finalI).getName() + ",   цена: "+goodsInSelectedGroup.get(finalI).getPrice().getValue().toString());
+                    stage.setTitle(goodsInSelectedGroup.get(finalI).getName() + ",   цена: " + goodsInSelectedGroup.get(finalI).getPrice().toString());
                     stage.initModality(Modality.APPLICATION_MODAL);
                     stage.setResizable(false);
                     //stage.initStyle(StageStyle.UNDECORATED);
@@ -124,6 +123,13 @@ public class GoodsFormController //implements Initializable
                     // Give the controller access to the main app.
                     QtyInputFormController qtyInputFormController = fxmlLoader.getController();
                     qtyInputFormController.setMainApp(mainApp);
+
+                    if (goodsInSelectedGroup.get(finalI).getSellTypeRRO() == 0) { //если товар штучный
+                        qtyInputFormController.getBtnComa().setVisible(false); //то пр€чем кнопку ','
+                    } else { //если товар весовой
+                        qtyInputFormController.getBtnComa().setVisible(true); //то показываем кнопку ','
+                    }
+
                     stage.showAndWait();
 
                 } catch (IOException e) {
@@ -131,7 +137,7 @@ public class GoodsFormController //implements Initializable
                     e.printStackTrace();
                 }
                 if (quantity.compareTo(BigDecimal.ZERO) != 0) {
-                    BigDecimal summary = new BigDecimal(goodsInSelectedGroup.get(finalI).getPrice().getValue().toString()).multiply(quantity);
+                    BigDecimal summary = new BigDecimal(goodsInSelectedGroup.get(finalI).getPrice().toString()).multiply(quantity);
 
                     if (MainApp.getGoodsInCheckObservableList().size() == 0) { //заказ пуст, добавл€ем первый товар в чек
                         MainApp.getGoodsInCheckObservableList().add(new GoodsInCheck(goodsInSelectedGroup.get(finalI), quantity, summary));
@@ -140,7 +146,7 @@ public class GoodsFormController //implements Initializable
                         for (int j = 0; j < MainApp.getGoodsInCheckObservableList().size(); j++) {
                             if (MainApp.getGoodsInCheckObservableList().get(j).getGoods().getCode() == goodsInSelectedGroup.get(finalI).getCode()) { //товар найден, измен€ем количество
                                 BigDecimal localQty = new BigDecimal(MainApp.getGoodsInCheckObservableList().get(j).quantityProperty().getValue().toString()).add(quantity);
-                                BigDecimal localSummary = new BigDecimal(goodsInSelectedGroup.get(finalI).getPrice().getValue().toString()).multiply(localQty);
+                                BigDecimal localSummary = new BigDecimal(goodsInSelectedGroup.get(finalI).getPrice().toString()).multiply(localQty);
                                 MainApp.getGoodsInCheckObservableList().get(j).setQuantity(localQty);
                                 MainApp.getGoodsInCheckObservableList().get(j).setSummaryOnGoods(localSummary);
                                 isGoodsFound = true;
