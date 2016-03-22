@@ -8,6 +8,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
@@ -37,6 +38,8 @@ public class MainApp extends Application {
     public ArrayList<GoodsGroup> allGoodsGroupsArrayList; //все группы товаров
     public static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList(goodsInCheckQTY -> new Observable[]{goodsInCheckQTY.quantityProperty()});
     private static SimpleObjectProperty<BigDecimal> checkSummary;
+    private static SimpleStringProperty CashSumInRRO;
+    private static SimpleStringProperty CCSumInRRO;
     private Stage MainStage;
     private static String pathToDataFile;
     private static int printerType;
@@ -60,6 +63,8 @@ public class MainApp extends Application {
         }
 
         checkSummary = new SimpleObjectProperty<BigDecimal>(new BigDecimal(0));
+        CashSumInRRO = new SimpleStringProperty("");
+        CCSumInRRO = new SimpleStringProperty("");
 
         //получение параметров настройки программы из файла настроек
         try {
@@ -98,6 +103,29 @@ public class MainApp extends Application {
         MainApp.goodsInCheckObservableList = goodsInCheckObservableList;
     }
 
+    public static String getCCSumInRRO() {
+        return CCSumInRRO.get();
+    }
+
+    public static SimpleStringProperty CCSumInRROProperty() {
+        return CCSumInRRO;
+    }
+
+    public static void setCCSumInRRO(String CCSumInRRO) {
+        MainApp.CCSumInRRO.set(CCSumInRRO);
+    }
+
+    public static String getCashSumInRRO() {
+        return CashSumInRRO.get();
+    }
+
+    public static SimpleStringProperty cashSumInRROProperty() {
+        return CashSumInRRO;
+    }
+
+    public static void setCashSumInRRO(String cashSumInRRO) {
+        MainApp.CashSumInRRO.set(cashSumInRRO);
+    }
 
     public static BigDecimal getCheckSummary() {
         return checkSummary.get();

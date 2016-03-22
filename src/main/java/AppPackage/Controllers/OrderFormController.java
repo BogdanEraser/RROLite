@@ -104,6 +104,14 @@ public class OrderFormController //implements Initializable
         return scene;
     }
 
+    public Label getLblRROSumCash() {
+        return lblRROSumCash;
+    }
+
+    public Label getLblRROSumCredit() {
+        return lblRROSumCredit;
+    }
+
     /**
      * Adds autoscroll to JavaFX tableview and selects last added row.
      *
@@ -128,9 +136,14 @@ public class OrderFormController //implements Initializable
     public void initialize() {
         log.debug("Initialising MainForm");
         if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
-            lblRROSumCash.setText("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO());
-            lblRROSumCredit.setText("Кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO());
+            MainApp.setCashSumInRRO("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO().toString());
+            MainApp.setCCSumInRRO("Кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO().toString());
+        } else {
+            MainApp.setCashSumInRRO("Наличными: Н/Д");
+            MainApp.setCCSumInRRO("Кредитной картой: Н/Д");
         }
+        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+
         CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
         if (CheckInternetConnnection.getInstance().isConnected()) {
             ConnectedIcon.setVisible(true);
@@ -200,6 +213,8 @@ public class OrderFormController //implements Initializable
         }
 
         globalSumOnCheck.textProperty().bind(MainApp.checkSummaryProperty().asString());
+        lblRROSumCash.textProperty().bind(MainApp.cashSumInRROProperty());
+        lblRROSumCredit.textProperty().bind(MainApp.CCSumInRROProperty());
 
         // Add observable list data to the table
         checkTableView.setItems(MainApp.getGoodsInCheckObservableList());

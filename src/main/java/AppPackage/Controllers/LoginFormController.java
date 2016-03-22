@@ -352,7 +352,7 @@ public class LoginFormController //implements Initializable
                         alert.setContentText(contentText);
                         Optional<ButtonType> result = alert.showAndWait();
                         if (result.isPresent() && result.get() == ButtonType.OK) {
-                            log.debug("нормальный выход");
+                            log.debug("exit on error");
                             Platform.exit();
                             System.exit(0);
                         }

@@ -664,6 +664,34 @@ public class CurrentRRO {
     }
 
 
+
+    /**
+     * Метод вызова Z-отчета в РРО (закртыие смены)
+     *
+     * @return boolean
+     */
+    public boolean execZReport() {
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                // execute_Z_report Распечатать дневной Z-отчет
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "execute_Z_report;12321").toString())) {
+                    return true;
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                    setLastEvent(Dispatch.call((Dispatch) rro_object, "get_last_event").toString());
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
+
     /**
      * Метод добавления товаров в базу товаров в РРО
      *

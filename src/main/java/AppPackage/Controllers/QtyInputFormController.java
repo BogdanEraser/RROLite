@@ -178,14 +178,14 @@ public class QtyInputFormController //implements Initializable
     }
 
     /**
-     * нажатие кнопки ","
+     * нажатие кнопки "."
      */
     public void setBtnComa() {
         if (txtValue.getText().length() < 8) {
             if (txtValue.getText().length() == 0) {
                 txtValue.setText("0,");
-            } else if (!txtValue.getText().contains(",")) {
-                txtValue.setText(txtValue.getText() + ",");
+            } else if (!txtValue.getText().contains(".")) {
+                txtValue.setText(txtValue.getText() + ".");
             }
             isFirstOpening = false;
         }

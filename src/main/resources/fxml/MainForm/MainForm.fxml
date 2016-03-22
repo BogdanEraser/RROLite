@@ -134,6 +134,21 @@
                   <Font name="Verdana" size="24.0" />
                </font>
             </Button>
+            <Button fx:id="btnZReport" alignment="BASELINE_CENTER" mnemonicParsing="false" onAction="#setZReportButton" prefHeight="80.0" prefWidth="240.0" text="Z-отчет (дневной с обнулением)" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" GridPane.columnIndex="4" GridPane.rowIndex="2">
+               <font>
+                  <Font name="Verdana" size="22.0" />
+               </font>
+            </Button>
+            <Button fx:id="btnCashInOut" alignment="BASELINE_CENTER" mnemonicParsing="false" onAction="#setCashInOutButton" prefHeight="80.0" prefWidth="240.0" text="Служебный внос/вынос денег" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" GridPane.rowIndex="2">
+               <font>
+                  <Font name="Verdana" size="22.0" />
+               </font>
+            </Button>
+            <Button fx:id="btnEmptyReceipt" alignment="BASELINE_CENTER" mnemonicParsing="false" onAction="#setEmptyReceiptButton" prefHeight="80.0" prefWidth="240.0" text="Нулевой чек" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="2">
+               <font>
+                  <Font name="Verdana" size="22.0" />
+               </font>
+            </Button>
          </children>
       </GridPane>
    </center>
