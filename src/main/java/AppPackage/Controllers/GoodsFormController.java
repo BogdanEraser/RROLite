@@ -92,7 +92,7 @@ public class GoodsFormController //implements Initializable
         int row = 0;
         //расставим кнопки согласно списку групп
         for (int i = 0; i < goodsInSelectedGroup.size(); i++) {
-            log.debug("Создаю кнопку товара '" + goodsInSelectedGroup.get(i).getName());
+            //log.debug("Создаю кнопку товара '" + goodsInSelectedGroup.get(i).getName());
             Button btn = new Button();
             btn.setText(goodsInSelectedGroup.get(i).getName());
             btn.setId(btn.hashCode() + goodsInSelectedGroup.get(i).getName());
@@ -145,7 +145,7 @@ public class GoodsFormController //implements Initializable
                         boolean isGoodsFound = false;  //заказ не пуст, ищем такой же товар
                         for (int j = 0; j < MainApp.getGoodsInCheckObservableList().size(); j++) {
                             if (MainApp.getGoodsInCheckObservableList().get(j).getGoods().getCode() == goodsInSelectedGroup.get(finalI).getCode()) { //товар найден, изменяем количество
-                                BigDecimal localQty = new BigDecimal(MainApp.getGoodsInCheckObservableList().get(j).quantityProperty().getValue().toString()).add(quantity);
+                                BigDecimal localQty = new BigDecimal(MainApp.getGoodsInCheckObservableList().get(j).getQuantity().toString()).add(quantity);
                                 BigDecimal localSummary = new BigDecimal(goodsInSelectedGroup.get(finalI).getPrice().toString()).multiply(localQty);
                                 MainApp.getGoodsInCheckObservableList().get(j).setQuantity(localQty);
                                 MainApp.getGoodsInCheckObservableList().get(j).setSummaryOnGoods(localSummary);
@@ -160,7 +160,8 @@ public class GoodsFormController //implements Initializable
                 }
                 //подсчитаем общий итог по чеку
                 MainApp.checkSummaryProperty().setValue(new BigDecimal(OrderFormController.getGlobalSumOnCheck().toString()));
-
+                //small trick to refresh tableview
+                OrderFormController.TableRefresh();
                 MainApp.rootLayout.setCenter(OrderFormController.getRootPane());
 
             });

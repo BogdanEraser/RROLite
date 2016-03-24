@@ -3,6 +3,7 @@ package AppPackage.Controllers;
 import AppPackage.MainApp;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
@@ -215,10 +216,18 @@ public class QtyInputFormController //implements Initializable
      */
     public void setBtnOK() {
         if (txtValue.getText().length() != 0) {
-            isFirstOpening = true;
-            GoodsFormController.setQuantity(new BigDecimal(txtValue.getText().replace(",", ".")));
-            Stage stage = (Stage) btnOK.getScene().getWindow();
-            stage.close();
+            if (new BigDecimal(txtValue.getText().replace(",", ".")).compareTo(new BigDecimal("0.001")) != -1) {
+                isFirstOpening = true;
+                GoodsFormController.setQuantity(new BigDecimal(txtValue.getText().replace(",", ".")));
+                Stage stage = (Stage) btnOK.getScene().getWindow();
+                stage.close();
+            } else {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Ошибка");
+                alert.setHeaderText("Недопустимый вес товара");
+                alert.setContentText("Минимально допустимый вес - 0,001 кг (1 грамм)");
+                alert.showAndWait();
+            }
         }
     }
 }

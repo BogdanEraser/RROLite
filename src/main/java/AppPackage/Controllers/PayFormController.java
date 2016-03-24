@@ -247,79 +247,230 @@ public class PayFormController //implements Initializable
      */
     public void setPayCash() {
         if ((txtValue.getText().length() != 0) & (new BigDecimal(txtValue.getText().replace(",", ".")).compareTo(new BigDecimal(txtToPay.getText().replace(",", "."))) != -1)) {
-            if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
+
+            if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openPortMiniFP()) {
+                //проверим, достаточно ли денег для сдачи в РРО
+                if (new BigDecimal(txtCharge.getText().replace(",", ".")).compareTo(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCashInRRO()) < 1) {
+                    //проверим, в каком состоянии чек
+                    switch (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getReceiptStatusFromRRO()) {
+                        case 0: {//чек закрыт, открываем его
+                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openReceipt(0)) {
+                                //открытие чека неуспешно
+                                log.debug("unable to open receipt - payCashButton interrupt ");
+                                Alert alert = new Alert(Alert.AlertType.WARNING);
+                                alert.setTitle("Ошибка");
+                                alert.setHeaderText("Невозможно открыть чек для продажи\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                                alert.showAndWait();
+                                CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
+                                return; //отменяем дальнейшее выполнение метода для кнопки "Наличные"
+                            }
+                            for (GoodsInCheck gic : MainApp.getGoodsInCheckObservableList()) {
+                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).saleGoodsToRRO(0, gic.getQuantity(), gic.getGoods().getCode(), gic.getGoods().getPrice())) {
+                                    //добавление товара в чек РРО неуспешно
+                                    log.debug("unable to make 'sale_plu' to RRO - payCashButton interrupt ");
+                                    Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+                                    alertQuestion.setTitle("Ошибка");
+                                    alertQuestion.setHeaderText("Ошибка при добавлении товара в чек\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError())
+                                            + "\nОтменить печать чека?");
+                                    alertQuestion.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult()
+                                            + " {" + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastEvent() + "}");
+                                    Optional<ButtonType> result = alertQuestion.showAndWait();
+                                    if (result.isPresent() && result.get() == ButtonType.OK) {
+                                        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).cancelReceipt();
+                                        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
+                                        return; //отменяем дальнейшее выполнение метода для кнопки "Наличные"
+                                    }
+                                }
+                            }
+                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).payGoodsToRRO(0, new BigDecimal(txtValue.getText().replace(",", ".")).setScale(2, BigDecimal.ROUND_HALF_EVEN))) {
+                                //оплата чека неуспешно
+                                log.debug("unable to pay receipt - payCashButton interrupt ");
+                                Alert alert = new Alert(Alert.AlertType.WARNING);
+                                alert.setTitle("Ошибка");
+                                alert.setHeaderText("Невозможно сделать оплату чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                                alert.showAndWait();
+                            } else {
+                                MainApp.getGoodsInCheckObservableList().clear();  //оплата успешна, очищаем товары из чека
+                                mainApp.setCheckSummary(BigDecimal.ZERO);  //и суммарно по чеку
+                                if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openPortMiniFP()) {
+                                    MainApp.setCashSumInRRO("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCashInRRO().toString());
+                                    MainApp.setCCSumInRRO("Кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCreditInRRO().toString());
+                                } else {
+                                    MainApp.setCashSumInRRO("Наличными: Н/Д");
+                                    MainApp.setCCSumInRRO("Кредитной картой: Н/Д");
+                                }
+
+                            }
+                            break;
+                        }
+                        case 1: {//чек открыт для продажи
+                            Alert alertRecQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+                            alertRecQuestion.setTitle("Подтверждение");
+                            alertRecQuestion.setHeaderText("Чек открыт для продажи\nОтменить чек или отменить процесс оплаты наличными?");
+                            alertRecQuestion.setContentText("'ОК' - отменить чек\t'Отмена' - отказ от оплаты");
+                            Optional<ButtonType> resultRec = alertRecQuestion.showAndWait();
+                            if (resultRec.isPresent() && resultRec.get() == ButtonType.OK) {
+                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).cancelReceipt()) {
+                                    //отмена чека неуспешно
+                                    log.debug("unable to cancel receipt - setExitButtonButton interrupt");
+                                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                                    alert.setTitle("Ошибка");
+                                    alert.setHeaderText("Ошибка при отмене чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                    alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                                    alert.showAndWait();
+                                }
+                            } else if (resultRec.isPresent() && resultRec.get() == ButtonType.CANCEL) {
+                                log.debug("receipt opened for sale - user selected setPayCashButton interrupt");
+                            }
+                            break;
+                        }
+                        case 2: {//чек открыт только для оплаты
+                            log.debug("receipt opened only for payment");
+                            Alert alert = new Alert(Alert.AlertType.WARNING);
+                            alert.setTitle("Подтверждение");
+                            alert.setHeaderText("Чек открыт только для оплаты\nЧек возможно отменить только вручную.\nВыключите и включите РРО с нажатием кнопки продвижения ленты");
+                            alert.showAndWait();
+                            break;
+                        }
+                        case 3: {//чек открыт для возврата
+                            Alert alertRecQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+                            alertRecQuestion.setTitle("Подтверждение");
+                            alertRecQuestion.setHeaderText("Чек открыт для возврата\nОтменить чек или отменить процесс оплаты наличными?");
+                            alertRecQuestion.setContentText("'ОК' - отменить чек\t'Отмена' - отказ от оплаты");
+                            Optional<ButtonType> resultRec = alertRecQuestion.showAndWait();
+                            if (resultRec.isPresent() && resultRec.get() == ButtonType.OK) {
+                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).cancelReceipt()) {
+                                    //отмена чека неуспешно
+                                    log.debug("unable to cancel receipt - setExitButtonButton interrupt");
+                                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                                    alert.setTitle("Ошибка");
+                                    alert.setHeaderText("Ошибка при отмене чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                    alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                                    alert.showAndWait();
+                                }
+                            } else if (resultRec.isPresent() && resultRec.get() == ButtonType.CANCEL) {
+                                log.debug("receipt opened for return - user selected setPayCashButton interrupt");
+                            }
+                            break;
+                        }
+                        case 99: {//состояние чека неопределено
+                            log.debug("receipt status not defined");
+                            Alert alert = new Alert(Alert.AlertType.WARNING);
+                            alert.setTitle("Ошибка");
+                            alert.setHeaderText("Состояние чека не определено\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                            alert.setContentText("Рекомендуется обратиться к администратору\nСлужебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                            alert.showAndWait();
+                            break;
+                        }
+                    }
+                    CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
+                    Stage stage = (Stage) btnPayCash.getScene().getWindow();
+                    stage.close();
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Ошибка");
+                    alert.setHeaderText("Сумма сдачи превышает количество наличных в кассе");
+                    alert.showAndWait();
+                }
+            }
+            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
+        } else {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Ошибка");
+            alert.setHeaderText("Неверно указана сумма наличных от покупателя");
+            alert.showAndWait();
+        }
+    }
+
+    /**
+     * нажатие кнопки "карта"
+     */
+    public void setPayCC() {
+        Alert alertCCQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+        alertCCQuestion.setTitle("Подтверждение");
+        alertCCQuestion.setHeaderText("Успешно ли прошла оплата кредитной картой?");
+        ButtonType buttonSuccess = new ButtonType("Успешно");
+        ButtonType buttonUnsuccess = new ButtonType("Оплата не прошла");
+        ButtonType buttonCancel = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
+        alertCCQuestion.getButtonTypes().setAll(buttonSuccess, buttonUnsuccess, buttonCancel);
+        Optional<ButtonType> resultCC = alertCCQuestion.showAndWait();
+        if (resultCC.isPresent() && resultCC.get() == buttonSuccess) {
+            //оплата прошла успешно
+            if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openPortMiniFP()) {
                 //сначала проверим, в каком состоянии чек
-                switch (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getReceiptStatusFromRRO()) {
+                switch (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getReceiptStatusFromRRO()) {
                     case 0: {//чек закрыт, открываем его
-                        if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openReceipt(0)) {
+                        if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openReceipt(0)) {
                             //открытие чека неуспешно
                             log.debug("unable to open receipt - payCashButton interrupt ");
                             Alert alert = new Alert(Alert.AlertType.WARNING);
                             alert.setTitle("Ошибка");
-                            alert.setHeaderText("Невозможно открыть чек для продажи\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
-                            alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                            alert.setHeaderText("Невозможно открыть чек для продажи\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                            alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
                             alert.showAndWait();
-                            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+                            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
                             return; //отменяем дальнейшее выполнение метода для кнопки "Наличные"
                         }
                         for (GoodsInCheck gic : MainApp.getGoodsInCheckObservableList()) {
-                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).saleGoodsToRRO(0, gic.getQuantity(), gic.getGoods().getCode(), gic.getGoods().getPrice())) {
+                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).saleGoodsToRRO(0, gic.getQuantity(), gic.getGoods().getCode(), gic.getGoods().getPrice())) {
                                 //добавление товара в чек РРО неуспешно
                                 log.debug("unable to make 'sale_plu' to RRO - payCashButton interrupt ");
                                 Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
                                 alertQuestion.setTitle("Ошибка");
-                                alertQuestion.setHeaderText("Ошибка при добавлении товара в чек\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError())
+                                alertQuestion.setHeaderText("Ошибка при добавлении товара в чек\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError())
                                         + "Отменить печать чека?");
-                                alertQuestion.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult()
-                                        + " {" + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastEvent() + "}");
+                                alertQuestion.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult()
+                                        + " {" + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastEvent() + "}");
                                 Optional<ButtonType> result = alertQuestion.showAndWait();
                                 if (result.isPresent() && result.get() == ButtonType.OK) {
-                                    CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).cancelReceipt();
-                                    CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
-                                    return; //отменяем дальнейшее выполнение метода для кнопки "Наличные"
+                                    CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).cancelReceipt();
+                                    CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
+                                    return; //отменяем дальнейшее выполнение метода для кнопки "Карта"
                                 }
                             }
                         }
-                        if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).payGoodsToRRO(0, new BigDecimal(txtValue.getText().replace(",", ".")).setScale(2, BigDecimal.ROUND_HALF_EVEN))) {
+                        if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).payGoodsToRRO(2, new BigDecimal(txtValue.getText().replace(",", ".")).setScale(2, BigDecimal.ROUND_HALF_EVEN))) {
                             //оплата чека неуспешно
-                            log.debug("unable to pay receipt - payCashButton interrupt ");
+                            log.debug("unable to pay receipt - payCashButton interrupt");
                             Alert alert = new Alert(Alert.AlertType.WARNING);
                             alert.setTitle("Ошибка");
-                            alert.setHeaderText("Невозможно сделать оплату чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
-                            alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                            alert.setHeaderText("Невозможно сделать оплату чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                            alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
                             alert.showAndWait();
                         } else {
                             MainApp.getGoodsInCheckObservableList().clear();  //оплата успешна, очищаем товары из чека
                             mainApp.setCheckSummary(BigDecimal.ZERO);  //и суммарно по чеку
-                            if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
-                                MainApp.setCashSumInRRO("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO().toString());
-                                MainApp.setCCSumInRRO("Кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO().toString());
+                            if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openPortMiniFP()) {
+                                MainApp.setCashSumInRRO("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCashInRRO().toString());
+                                MainApp.setCCSumInRRO("Кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCreditInRRO().toString());
                             } else {
                                 MainApp.setCashSumInRRO("Наличными: Н/Д");
                                 MainApp.setCCSumInRRO("Кредитной картой: Н/Д");
                             }
-
                         }
+
                         break;
                     }
                     case 1: {//чек открыт для продажи
                         Alert alertRecQuestion = new Alert(Alert.AlertType.CONFIRMATION);
                         alertRecQuestion.setTitle("Подтверждение");
-                        alertRecQuestion.setHeaderText("Чек открыт для продажи\nОтменить чек или отменить процесс оплаты наличными?");
+                        alertRecQuestion.setHeaderText("Чек открыт для продажи\nОтменить чек или отменить процесс оплаты картой?");
                         alertRecQuestion.setContentText("'ОК' - отменить чек\t'Отмена' - отказ от оплаты");
                         Optional<ButtonType> resultRec = alertRecQuestion.showAndWait();
                         if (resultRec.isPresent() && resultRec.get() == ButtonType.OK) {
-                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).cancelReceipt()) {
+                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).cancelReceipt()) {
                                 //отмена чека неуспешно
-                                log.debug("unable to cancel receipt - setExitButtonButton interrupt");
+                                log.debug("unable to cancel receipt - setPayCCButton interrupt");
                                 Alert alert = new Alert(Alert.AlertType.WARNING);
                                 alert.setTitle("Ошибка");
-                                alert.setHeaderText("Ошибка при отмене чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
-                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                                alert.setHeaderText("Ошибка при отмене чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
                                 alert.showAndWait();
                             }
                         } else if (resultRec.isPresent() && resultRec.get() == ButtonType.CANCEL) {
-                            log.debug("receipt opened for sale - user selected setPayCashButton interrupt");
+                            log.debug("receipt opened for sale - user selected setPayССButton interrupt");
                         }
                         break;
                     }
@@ -334,21 +485,21 @@ public class PayFormController //implements Initializable
                     case 3: {//чек открыт для возврата
                         Alert alertRecQuestion = new Alert(Alert.AlertType.CONFIRMATION);
                         alertRecQuestion.setTitle("Подтверждение");
-                        alertRecQuestion.setHeaderText("Чек открыт для возврата\nОтменить чек или отменить процесс оплаты наличными?");
+                        alertRecQuestion.setHeaderText("Чек открыт для возврата\nОтменить чек или отменить процесс оплаты картой?");
                         alertRecQuestion.setContentText("'ОК' - отменить чек\t'Отмена' - отказ от оплаты");
                         Optional<ButtonType> resultRec = alertRecQuestion.showAndWait();
                         if (resultRec.isPresent() && resultRec.get() == ButtonType.OK) {
-                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).cancelReceipt()) {
+                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).cancelReceipt()) {
                                 //отмена чека неуспешно
-                                log.debug("unable to cancel receipt - setExitButtonButton interrupt");
+                                log.debug("unable to cancel receipt - setPayCCButton interrupt");
                                 Alert alert = new Alert(Alert.AlertType.WARNING);
                                 alert.setTitle("Ошибка");
-                                alert.setHeaderText("Ошибка при отмене чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
-                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                                alert.setHeaderText("Ошибка при отмене чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
                                 alert.showAndWait();
                             }
                         } else if (resultRec.isPresent() && resultRec.get() == ButtonType.CANCEL) {
-                            log.debug("receipt opened for return - user selected setPayCashButton interrupt");
+                            log.debug("receipt opened for return - user selected setPayCCButton interrupt");
                         }
                         break;
                     }
@@ -356,157 +507,23 @@ public class PayFormController //implements Initializable
                         log.debug("receipt status not defined");
                         Alert alert = new Alert(Alert.AlertType.WARNING);
                         alert.setTitle("Ошибка");
-                        alert.setHeaderText("Состояние чека не определено\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
-                        alert.setContentText("Рекомендуется обратиться к администратору\nСлужебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                        alert.setHeaderText("Состояние чека не определено\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                        alert.setContentText("Рекомендуется обратиться к администратору\nСлужебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
                         alert.showAndWait();
                         break;
                     }
                 }
             }
-            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
-            Stage stage = (Stage) btnPayCash.getScene().getWindow();
+            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
+            Stage stage = (Stage) btnPayCC.getScene().getWindow();
             stage.close();
-        } else {
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("Ошибка");
-            alert.setHeaderText("Неверно указана сумма наличных от покупателя");
-            alert.showAndWait();
+        } else if (resultCC.isPresent() && resultCC.get() == buttonUnsuccess) {
+            //оплата не прошла
+        } else if (resultCC.isPresent() && resultCC.get() == buttonCancel) {
+            //отаказ от оплаты
+            Stage stage = (Stage) btnPayCC.getScene().getWindow();
+            stage.close();
         }
-    }
-
-    /**
-     * нажатие кнопки "карта"
-     */
-    public void setPayCC() {
-        if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
-            //сначала проверим, в каком состоянии чек
-            switch (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getReceiptStatusFromRRO()) {
-                case 0: {//чек закрыт, открываем его
-                    if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openReceipt(0)) {
-                        //открытие чека неуспешно
-                        log.debug("unable to open receipt - payCashButton interrupt ");
-                        Alert alert = new Alert(Alert.AlertType.WARNING);
-                        alert.setTitle("Ошибка");
-                        alert.setHeaderText("Невозможно открыть чек для продажи\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
-                        alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
-                        alert.showAndWait();
-                        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
-                        return; //отменяем дальнейшее выполнение метода для кнопки "Наличные"
-                    }
-                    for (GoodsInCheck gic : MainApp.getGoodsInCheckObservableList()) {
-                        if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).saleGoodsToRRO(0, gic.getQuantity(), gic.getGoods().getCode(), gic.getGoods().getPrice())) {
-                            //добавление товара в чек РРО неуспешно
-                            log.debug("unable to make 'sale_plu' to RRO - payCashButton interrupt ");
-                            Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
-                            alertQuestion.setTitle("Ошибка");
-                            alertQuestion.setHeaderText("Ошибка при добавлении товара в чек\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError())
-                                    + "Отменить печать чека?");
-                            alertQuestion.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult()
-                                    + " {" + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastEvent() + "}");
-                            Optional<ButtonType> result = alertQuestion.showAndWait();
-                            if (result.isPresent() && result.get() == ButtonType.OK) {
-                                CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).cancelReceipt();
-                                CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
-                                return; //отменяем дальнейшее выполнение метода для кнопки "Карта"
-                            }
-                        }
-                    }
-                    Alert alertCCQuestion = new Alert(Alert.AlertType.CONFIRMATION);
-                    alertCCQuestion.setTitle("Подтверждение");
-                    alertCCQuestion.setHeaderText("Успешно ли прошла оплата кредитной картой?");
-                    //alertCCQuestion.setContentText("'ОК' - успешно\t'Отмена' - оплата не прошла");
-                    ButtonType buttonSuccess = new ButtonType("Успешно");
-                    ButtonType buttonUnsuccess = new ButtonType("Оплата не прошла");
-                    ButtonType buttonCancel = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
-                    alertCCQuestion.getButtonTypes().setAll(buttonSuccess, buttonUnsuccess, buttonCancel);
-                    Optional<ButtonType> resultCC = alertCCQuestion.showAndWait();
-                    if (resultCC.isPresent() && resultCC.get() == buttonSuccess) {
-                        if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).payGoodsToRRO(2, new BigDecimal(txtValue.getText().replace(",", ".")).setScale(2, BigDecimal.ROUND_HALF_EVEN))) {
-                            //оплата чека неуспешно
-                            log.debug("unable to pay receipt - payCashButton interrupt");
-                            Alert alert = new Alert(Alert.AlertType.WARNING);
-                            alert.setTitle("Ошибка");
-                            alert.setHeaderText("Невозможно сделать оплату чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
-                            alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
-                            alert.showAndWait();
-                        } else {
-                            MainApp.getGoodsInCheckObservableList().clear();  //оплата успешна, очищаем товары из чека
-                            mainApp.setCheckSummary(BigDecimal.ZERO);  //и суммарно по чеку
-                            if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
-                                MainApp.setCashSumInRRO("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO().toString());
-                                MainApp.setCCSumInRRO("Кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO().toString());
-                            } else {
-                                MainApp.setCashSumInRRO("Наличными: Н/Д");
-                                MainApp.setCCSumInRRO("Кредитной картой: Н/Д");
-                            }
-                        }
-                    }
-                    break;
-                }
-                case 1: {//чек открыт для продажи
-                    Alert alertRecQuestion = new Alert(Alert.AlertType.CONFIRMATION);
-                    alertRecQuestion.setTitle("Подтверждение");
-                    alertRecQuestion.setHeaderText("Чек открыт для продажи\nОтменить чек или отменить процесс оплаты картой?");
-                    alertRecQuestion.setContentText("'ОК' - отменить чек\t'Отмена' - отказ от оплаты");
-                    Optional<ButtonType> resultRec = alertRecQuestion.showAndWait();
-                    if (resultRec.isPresent() && resultRec.get() == ButtonType.OK) {
-                        if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).cancelReceipt()) {
-                            //отмена чека неуспешно
-                            log.debug("unable to cancel receipt - setPayCCButton interrupt");
-                            Alert alert = new Alert(Alert.AlertType.WARNING);
-                            alert.setTitle("Ошибка");
-                            alert.setHeaderText("Ошибка при отмене чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
-                            alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
-                            alert.showAndWait();
-                        }
-                    } else if (resultRec.isPresent() && resultRec.get() == ButtonType.CANCEL) {
-                        log.debug("receipt opened for sale - user selected setPayССButton interrupt");
-                    }
-                    break;
-                }
-                case 2: {//чек открыт только для оплаты
-                    log.debug("receipt opened only for payment");
-                    Alert alert = new Alert(Alert.AlertType.WARNING);
-                    alert.setTitle("Подтверждение");
-                    alert.setHeaderText("Чек открыт только для оплаты\nЧек возможно отменить только вручную.\nВыключите и включите РРО с нажатием кнопки продвижения ленты");
-                    alert.showAndWait();
-                    break;
-                }
-                case 3: {//чек открыт для возврата
-                    Alert alertRecQuestion = new Alert(Alert.AlertType.CONFIRMATION);
-                    alertRecQuestion.setTitle("Подтверждение");
-                    alertRecQuestion.setHeaderText("Чек открыт для возврата\nОтменить чек или отменить процесс оплаты картой?");
-                    alertRecQuestion.setContentText("'ОК' - отменить чек\t'Отмена' - отказ от оплаты");
-                    Optional<ButtonType> resultRec = alertRecQuestion.showAndWait();
-                    if (resultRec.isPresent() && resultRec.get() == ButtonType.OK) {
-                        if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).cancelReceipt()) {
-                            //отмена чека неуспешно
-                            log.debug("unable to cancel receipt - setPayCCButton interrupt");
-                            Alert alert = new Alert(Alert.AlertType.WARNING);
-                            alert.setTitle("Ошибка");
-                            alert.setHeaderText("Ошибка при отмене чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
-                            alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
-                            alert.showAndWait();
-                        }
-                    } else if (resultRec.isPresent() && resultRec.get() == ButtonType.CANCEL) {
-                        log.debug("receipt opened for return - user selected setPayCCButton interrupt");
-                    }
-                    break;
-                }
-                case 99: {//состояние чека неопределено
-                    log.debug("receipt status not defined");
-                    Alert alert = new Alert(Alert.AlertType.WARNING);
-                    alert.setTitle("Ошибка");
-                    alert.setHeaderText("Состояние чека не определено\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
-                    alert.setContentText("Рекомендуется обратиться к администратору\nСлужебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
-                    alert.showAndWait();
-                    break;
-                }
-            }
-        }
-        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
-        Stage stage = (Stage) btnPayCC.getScene().getWindow();
-        stage.close();
     }
 
     /**

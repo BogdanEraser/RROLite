@@ -309,19 +309,19 @@ public class LoginFormController //implements Initializable
                 if (Integer.parseInt(txtPassword.getText()) == user.getPswd()) {
                     try {
                         CurrentUser.getInstance(user.getName(), user.getPswd(), user.getAccessLevel());
-                        if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
-                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).cashierRegister(user.getName())) {
+                        if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openPortMiniFP()) {
+                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).cashierRegister(user.getName())) {
                                 //регистрация кассира не удалась
                                 log.debug("unable register cashier in RRO - setBtnLogin interrupt");
                                 Alert alert = new Alert(Alert.AlertType.WARNING);
                                 alert.setTitle("Ошибка");
-                                alert.setHeaderText("Не удалось зарегистрировать кассира в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastError()));
-                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getLastResult());
+                                alert.setHeaderText("Не удалось зарегистрировать кассира в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
                                 alert.showAndWait();
                                 return; //отменяем дальнейшее выполнение метода для кнопки "ОК"
                             }
                         }
-                        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+                        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
                         String fxmlFormPath = "/fxml/MainForm/MainForm.fxml";
                         log.debug("Loading MainForm for main view into RootLayout");
                         FXMLLoader fxmlLoader = new FXMLLoader();
@@ -339,7 +339,7 @@ public class LoginFormController //implements Initializable
                         log.debug("Ошибка загрузки главной формы" + e.toString());
                         String headerText;
                         String contentText;
-                        if (MainApp.getPrinterType() == 0 | MainApp.getPrinterPort() == 0 | MainApp.getPrinerPortSpeed() == 0) {
+                        if (MainApp.getPrinterType() == 0 | MainApp.getPrinterPort() == 0 | MainApp.getPrinterPortSpeed() == 0) {
                             headerText = "Нет информации о подключении фискального принтера в файле настроек 'rro.ini'";
                             contentText = "Возможно, эти параметры заданы неверно";
                         } else {

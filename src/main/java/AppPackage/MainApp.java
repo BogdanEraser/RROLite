@@ -1,6 +1,7 @@
 package AppPackage;
 
 import AppPackage.Controllers.LoginFormController;
+import AppPackage.Controllers.OrderFormController;
 import AppPackage.Entities.Goods;
 import AppPackage.Entities.GoodsGroup;
 import AppPackage.Entities.GoodsInCheck;
@@ -36,7 +37,13 @@ public class MainApp extends Application {
     public ArrayList<Goods> allGoodsArrayList; //вообще все возможные товары
     public ArrayList<Goods> allSelectedGoodsArrayList; //все товары, избранные для продажи
     public ArrayList<GoodsGroup> allGoodsGroupsArrayList; //все группы товаров
-    public static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList(goodsInCheckQTY -> new Observable[]{goodsInCheckQTY.quantityProperty()});
+    public static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList(goodsInCheck -> new Observable[]{goodsInCheck.quantityProperty()});
+    /*public static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList(new Callback<GoodsInCheck, Observable[]>() {
+        @Override
+        public Observable[] call(GoodsInCheck goodsInCheck) {
+            return new Observable[]{(Observable) goodsInCheck.getQuantity()};
+        }
+    });*/
     private static SimpleObjectProperty<BigDecimal> checkSummary;
     private static SimpleStringProperty CashSumInRRO;
     private static SimpleStringProperty CCSumInRRO;
@@ -44,7 +51,8 @@ public class MainApp extends Application {
     private static String pathToDataFile;
     private static int printerType;
     private static int printerPort;
-    private static int prinerPortSpeed;
+    private static int printerPortSpeed;
+    public OrderFormController orderFormController;
 
     /**
      * MAIN ROUTINE
@@ -77,11 +85,11 @@ public class MainApp extends Application {
                 pathToDataFile = splittedLines[0];
                 printerType = Integer.parseInt(splittedLines[1]);
                 printerPort = Integer.parseInt(splittedLines[2]);
-                prinerPortSpeed = Integer.parseInt(splittedLines[3]);
+                printerPortSpeed = Integer.parseInt(splittedLines[3]);
                 log.debug("pathToDataFile: " + pathToDataFile);
                 log.debug("printerType: " + printerType);
                 log.debug("printerPort: " + printerPort);
-                log.debug("printerPortSpeed: " + prinerPortSpeed);
+                log.debug("printerPortSpeed: " + printerPortSpeed);
             }
         } catch (IOException e) {
             log.debug("error getting setup data from rro.ini" + e.toString());
@@ -155,8 +163,8 @@ public class MainApp extends Application {
         return pathToDataFile;
     }
 
-    public static int getPrinerPortSpeed() {
-        return prinerPortSpeed;
+    public static int getPrinterPortSpeed() {
+        return printerPortSpeed;
     }
 
     public static int getPrinterPort() {
@@ -250,4 +258,5 @@ public class MainApp extends Application {
             }
         }
     }
+
 }

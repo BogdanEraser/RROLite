@@ -61,9 +61,9 @@ public class OrderFormController //implements Initializable
     @FXML
     private TableColumn<GoodsInCheck, BigDecimal> goodsPriceColumn;
     @FXML
-    private TableColumn<GoodsInCheck, BigDecimal> goodsQtyColumn;
+    private TableColumn<GoodsInCheck, String> goodsQtyColumn;
     @FXML
-    private TableColumn<GoodsInCheck, BigDecimal> goodsSummColumn;
+    private TableColumn<GoodsInCheck, String> goodsSummColumn;
     @FXML
     private Label globalSumOnCheck;
     @FXML
@@ -112,6 +112,10 @@ public class OrderFormController //implements Initializable
         return lblRROSumCredit;
     }
 
+    public TableView<GoodsInCheck> getCheckTableView() {
+        return checkTableView;
+    }
+
     /**
      * Adds autoscroll to JavaFX tableview and selects last added row.
      *
@@ -135,16 +139,16 @@ public class OrderFormController //implements Initializable
     @FXML
     public void initialize() {
         log.debug("Initialising MainForm");
-        if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).openPortMiniFP()) {
-            MainApp.setCashSumInRRO("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCashInRRO().toString());
-            MainApp.setCCSumInRRO("Кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).getCreditInRRO().toString());
+        if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openPortMiniFP()) {
+            MainApp.setCashSumInRRO("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCashInRRO().toString());
+            MainApp.setCCSumInRRO("Кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCreditInRRO().toString());
         } else {
             MainApp.setCashSumInRRO("Наличными: Н/Д");
             MainApp.setCCSumInRRO("Кредитной картой: Н/Д");
         }
-        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
 
-        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinerPortSpeed())).closePortMiniFP();
+        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
         if (CheckInternetConnnection.getInstance().isConnected()) {
             ConnectedIcon.setVisible(true);
             NotConnectedIcon.setVisible(false);
@@ -170,7 +174,7 @@ public class OrderFormController //implements Initializable
         setMainApp(MainFormController.getMainApp());
         //расставим кнопки согласно списку групп
         for (int i = 0; i < mainApp.allGoodsGroupsArrayList.size(); i++) {
-            log.debug("Создаю кнопку группы для группы: " + mainApp.allGoodsGroupsArrayList.get(i).getName());
+            //log.debug("Создаю кнопку группы для группы: " + mainApp.allGoodsGroupsArrayList.get(i).getName());
             Button btn = new Button();
             btn.setText(mainApp.allGoodsGroupsArrayList.get(i).getName());
             btn.setId(btn.hashCode() + mainApp.allGoodsGroupsArrayList.get(i).getName());
@@ -234,16 +238,39 @@ public class OrderFormController //implements Initializable
         goodsNameColumn.setCellValueFactory(new PropertyValueFactory<GoodsInCheck,String>("name"));
         goodsPriceColumn = new TableColumn<GoodsInCheck,BigDecimal>();
         goodsPriceColumn.setCellValueFactory(new PropertyValueFactory<GoodsInCheck,BigDecimal>("price"));
+        goodsQtyColumn = new TableColumn<GoodsInCheck,String>();
+        goodsQtyColumn.setCellValueFactory(new PropertyValueFactory<GoodsInCheck,String>("quantity"));
+        goodsSummColumn = new TableColumn<GoodsInCheck,String>();
+        goodsSummColumn.setCellValueFactory(new PropertyValueFactory<GoodsInCheck,String>("summaryOnGoods"));
         */
 
+        /*With LAMBDA*/
         goodsNameColumn.setCellValueFactory(cellData -> new ReadOnlyStringWrapper(cellData.getValue().getGoods().getName()));
+        goodsPriceColumn.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<BigDecimal>(cellData.getValue().getGoods().getPrice()));
+        goodsQtyColumn.setCellValueFactory(cellData -> cellData.getValue().quantityProperty());
+        goodsSummColumn.setCellValueFactory(cellData -> cellData.getValue().summaryOnGoodsProperty());
+
+
+        checkTableView.getColumns().get(0).setVisible(false);
+        checkTableView.getColumns().get(0).setVisible(true);
+        /*goodsQtyColumn.setCellValueFactory(cellData -> new ObjectBinding<BigDecimal>() {
+            @Override
+            protected BigDecimal computeValue() {
+                return cellData.getValue().getQuantity();
+            }
+        });
+        goodsSummColumn.setCellValueFactory(cellData -> new ObjectBinding<BigDecimal>() {
+            @Override
+            protected BigDecimal computeValue() {
+                return cellData.getValue().getSummaryOnGoods();
+            }
+        });
+*/
+
         goodsNameColumn.setStyle("-fx-alignment: CENTER-LEFT; -fx-font-size: 21");
         String tblColStyle = "-fx-alignment: CENTER-RIGHT; -fx-font-size: 21";
-        goodsPriceColumn.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<BigDecimal>(cellData.getValue().getGoods().getPrice()));
         goodsPriceColumn.setStyle(tblColStyle);
-        goodsQtyColumn.setCellValueFactory(cellData -> cellData.getValue().quantityProperty());
         goodsQtyColumn.setStyle(tblColStyle);
-        goodsSummColumn.setCellValueFactory(cellData -> cellData.getValue().summaryOnGoodsProperty());
         goodsSummColumn.setStyle(tblColStyle);
 
 
@@ -268,32 +295,40 @@ public class OrderFormController //implements Initializable
 
     public void setCheckout() {
         //покажем форму выбора оплаты
-        try {
-            stage = new Stage();
-            String fxmlFormPath = "/fxml/PayForm/PayForm.fxml";
-            log.debug("Loading PayTypeForm for making payment into new scene");
-            FXMLLoader fxmlLoader = new FXMLLoader();
-            fxmlLoader.setLocation(MainApp.class.getResource(fxmlFormPath));
-            log.debug("Setting location from FXML - PayForm");
-            root = fxmlLoader.load();
-            log.debug("Отображаем форму оплаты");
-            stage.setScene(new Scene(root, 800, 600));
-            //stage.initStyle(StageStyle.UNDECORATED);
-            stage.setTitle("Выбор типа оплаты");
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setResizable(false);
-            stage.initOwner(btnCheckout.getScene().getWindow());
-            stage.initStyle(StageStyle.UTILITY);
-            stage.setOnCloseRequest(windowEvent -> {
-                windowEvent.consume();
-            });
-            // Give the controller access to the main app.
-            PayFormController payFormController = fxmlLoader.getController();
-            payFormController.setMainApp(mainApp);
-            stage.showAndWait();
+        if (MainApp.getCheckSummary().compareTo(BigDecimal.ZERO)==0) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Ошибка");
+            alert.setHeaderText("Пустой заказ");
+            alert.setContentText("Добавьте в заказ товары и попробуйте еще раз");
+            alert.showAndWait();
+        } else {
+            try {
+                stage = new Stage();
+                String fxmlFormPath = "/fxml/PayForm/PayForm.fxml";
+                log.debug("Loading PayTypeForm for making payment into new scene");
+                FXMLLoader fxmlLoader = new FXMLLoader();
+                fxmlLoader.setLocation(MainApp.class.getResource(fxmlFormPath));
+                log.debug("Setting location from FXML - PayForm");
+                root = fxmlLoader.load();
+                log.debug("Отображаем форму оплаты");
+                stage.setScene(new Scene(root, 800, 600));
+                //stage.initStyle(StageStyle.UNDECORATED);
+                stage.setTitle("Выбор типа оплаты");
+                stage.initModality(Modality.APPLICATION_MODAL);
+                stage.setResizable(false);
+                stage.initOwner(btnCheckout.getScene().getWindow());
+                stage.initStyle(StageStyle.UTILITY);
+                stage.setOnCloseRequest(windowEvent -> {
+                    windowEvent.consume();
+                });
+                // Give the controller access to the main app.
+                PayFormController payFormController = fxmlLoader.getController();
+                payFormController.setMainApp(mainApp);
+                stage.showAndWait();
 
-        } catch (IOException e) {
-            log.debug("Ошибка загрузки формы выбора типа оплаты " + e.toString());
+            } catch (IOException e) {
+                log.debug("Ошибка загрузки формы выбора типа оплаты " + e.toString());
+            }
         }
     }
 
@@ -302,18 +337,23 @@ public class OrderFormController //implements Initializable
         for (GoodsInCheck entry : MainApp.getGoodsInCheckObservableList()) {
             sumOnCheck = sumOnCheck.add(new BigDecimal(entry.getSummaryOnGoods().toString()));
         }
-        return sumOnCheck.setScale(2,BigDecimal.ROUND_HALF_EVEN);
+        return sumOnCheck.setScale(2, BigDecimal.ROUND_HALF_EVEN);
     }
 
     public static void deleteGoodsFromOrder(GoodsInCheck goodsInCheck) {
         ListIterator<GoodsInCheck> goodsInCheckListIterator = MainApp.getGoodsInCheckObservableList().listIterator();
-        while (goodsInCheckListIterator.hasNext()){
+        while (goodsInCheckListIterator.hasNext()) {
             if (goodsInCheckListIterator.next().getGoods().getCode() == goodsInCheck.getGoods().getCode()) {
                 goodsInCheckListIterator.remove();
                 MainApp.checkSummaryProperty().setValue(new BigDecimal(OrderFormController.getGlobalSumOnCheck().toString()));
                 break;
             }
         }
+    }
+
+    public static void TableRefresh() {
+        mainApp.orderFormController.checkTableView.getColumns().get(0).setVisible(false);
+        mainApp.orderFormController.checkTableView.getColumns().get(0).setVisible(true);
     }
 
 }

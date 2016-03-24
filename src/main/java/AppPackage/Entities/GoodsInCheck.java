@@ -1,6 +1,7 @@
 package AppPackage.Entities;
 
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 
 import java.math.BigDecimal;
 
@@ -24,9 +25,13 @@ public class GoodsInCheck {
         return quantity.get();
     }
 
-    public SimpleObjectProperty<BigDecimal> quantityProperty() {
-        return new SimpleObjectProperty<BigDecimal>(new BigDecimal(quantity.getValue().toString()).setScale(3,BigDecimal.ROUND_CEILING));
+    public SimpleStringProperty quantityProperty() {
+        return new SimpleStringProperty(quantity.getValue().setScale(2,BigDecimal.ROUND_HALF_EVEN).toString());
     }
+
+    /*public SimpleObjectProperty<BigDecimal> quantityProperty() {
+        return new SimpleObjectProperty<BigDecimal>(new BigDecimal(quantity.getValue().toString()).setScale(3,BigDecimal.ROUND_CEILING));
+    }*/
 
     public void setQuantity(BigDecimal quantity) {
         this.quantity.set(quantity);
@@ -36,9 +41,13 @@ public class GoodsInCheck {
         return summaryOnGoods.get();
     }
 
-    public SimpleObjectProperty<BigDecimal> summaryOnGoodsProperty() {
-        return new SimpleObjectProperty<BigDecimal>(new BigDecimal(summaryOnGoods.getValue().toString()).setScale(2,BigDecimal.ROUND_HALF_EVEN));
+    public SimpleStringProperty summaryOnGoodsProperty() {
+        return new SimpleStringProperty(summaryOnGoods.getValue().setScale(2,BigDecimal.ROUND_HALF_EVEN).toString());
     }
+
+    /*public SimpleObjectProperty<BigDecimal> summaryOnGoodsProperty() {
+        return new SimpleObjectProperty<BigDecimal>(new BigDecimal(summaryOnGoods.getValue().toString()).setScale(2,BigDecimal.ROUND_HALF_EVEN));
+    }*/
 
     public void setSummaryOnGoods(BigDecimal summaryOnGoods) {
         this.summaryOnGoods.set(summaryOnGoods);
