@@ -13,7 +13,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.*;
@@ -27,13 +26,12 @@ import java.util.ResourceBundle;
 public class LoginFormController //implements Initializable
 {
     private static final Logger log = Logger.getLogger(LoginFormController.class);
-    public int i = 10;
     public ArrayList<String> btnArrayList = new ArrayList();
     private Scene scene;
     private MainApp mainApp;
     private ArrayList<User> userArrayList;
     @FXML
-    private AnchorPane loginForm;
+    private static BorderPane loginForm;
     @FXML
     private Button btn1;
     @FXML
@@ -79,6 +77,15 @@ public class LoginFormController //implements Initializable
     public void setScene(Scene scene) {
         this.scene = scene;
     }
+
+    public static BorderPane getRootPane() {
+        return loginForm;
+    }
+
+    public static void setRootPane(BorderPane loginForm) {
+        LoginFormController.loginForm = loginForm;
+    }
+
 
     @FXML
     public void initialize() {

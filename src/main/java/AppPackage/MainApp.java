@@ -230,6 +230,7 @@ public class MainApp extends Application {
 
             // Give the controller access to the main app.
             LoginFormController loginFormController = fxmlLoader.getController();
+            LoginFormController.setRootPane(loginPane);
             loginFormController.setMainApp(this);
 
         } catch (IOException e) {

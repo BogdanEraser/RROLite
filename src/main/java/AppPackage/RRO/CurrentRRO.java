@@ -428,8 +428,7 @@ public class CurrentRRO {
                 if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "get_status;1;").toString())) {
                     setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
                     //par11 - Дата начала смены дд.мм.гггг  par12 - Время начала смены чч:мм:сс
-                    shiftStartDateTime = LocalDateTime.parse(((Arrays.asList(getLastResult().split(";")).get(11)) + (Arrays.asList(getLastResult().split(";")).get(11))), DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM));
-                    return shiftStartDateTime;
+                    shiftStartDateTime = LocalDateTime.parse(((Arrays.asList(getLastResult().split(";")).get(11)) + " " + (Arrays.asList(getLastResult().split(";")).get(12))), DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM));
                 } else {
                     setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
                     setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
@@ -588,7 +587,7 @@ public class CurrentRRO {
                  *  par3-parX Данные для записи в таблицу Строка
                  */
                 if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "cashier_registration;1;0;").toString())) {
-                    if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "write_table;3;1;" + name+";").toString())) {
+                    if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "write_table;3;1;" + name + ";").toString())) {
                         return true;
                     } else {
                         setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
@@ -664,7 +663,6 @@ public class CurrentRRO {
     }
 
 
-
     /**
      * Метод вызова Z-отчета в РРО (закртыие смены)
      *
@@ -677,6 +675,33 @@ public class CurrentRRO {
             case 1: { //мини-фп
                 // execute_Z_report Распечатать дневной Z-отчет
                 if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "execute_Z_report;12321").toString())) {
+                    return true;
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                    setLastEvent(Dispatch.call((Dispatch) rro_object, "get_last_event").toString());
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Метод печати нулевого чека в РРО
+     *
+     * @return boolean
+     */
+    public boolean printEmptyReceipt() {
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                // print_empty_receipt Распечатать нулевой чек
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "print_empty_receipt;").toString())) {
                     return true;
                 } else {
                     setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
@@ -825,7 +850,6 @@ public class CurrentRRO {
         }
         return false;
     }
-
 
 
     public void closePortMiniFP() {

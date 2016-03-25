@@ -530,18 +530,145 @@ public class PayFormController //implements Initializable
      * нажатие кнопки "возврат товара"
      */
     public void setGoodsReturn() {
+        Alert alertRetQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+        alertRetQuestion.setTitle("Подтверждение");
+        alertRetQuestion.setHeaderText("Провести возврат выбранного товара?");
+        Optional<ButtonType> resultRet = alertRetQuestion.showAndWait();
+        if (resultRet.isPresent() && resultRet.get() == ButtonType.OK) {
+            //да, воврат товара подтвержден
+            if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openPortMiniFP()) {
+                //проверим, достаточно ли денег для возврата в РРО
+                if (new BigDecimal(txtToPay.getText().replace(",", ".")).compareTo(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCashInRRO()) < 1) {
+                    //проверим, в каком состоянии чек
+                    switch (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getReceiptStatusFromRRO()) {
+                        case 0: {//чек закрыт, открываем его для возврата
+                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openReceipt(1)) {
+                                //открытие чека неуспешно
+                                log.debug("unable to open receipt - goodsReturnButton interrupt ");
+                                Alert alert = new Alert(Alert.AlertType.WARNING);
+                                alert.setTitle("Ошибка");
+                                alert.setHeaderText("Невозможно открыть чек для воврата товара\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                                alert.showAndWait();
+                                CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
+                                return; //отменяем дальнейшее выполнение метода для кнопки "возврат товара"
+                            }
+                            for (GoodsInCheck gic : MainApp.getGoodsInCheckObservableList()) {
+                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).saleGoodsToRRO(0, gic.getQuantity(), gic.getGoods().getCode(), gic.getGoods().getPrice())) {
+                                    //добавление товара в чек РРО неуспешно
+                                    log.debug("unable to make 'sale_plu' to RRO - goodsReturnButton interrupt ");
+                                    Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+                                    alertQuestion.setTitle("Ошибка");
+                                    alertQuestion.setHeaderText("Ошибка при добавлении товара в чек\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError())
+                                            + "\nОтменить печать чека?");
+                                    alertQuestion.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult()
+                                            + " {" + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastEvent() + "}");
+                                    Optional<ButtonType> result = alertQuestion.showAndWait();
+                                    if (result.isPresent() && result.get() == ButtonType.OK) {
+                                        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).cancelReceipt();
+                                        CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
+                                        return; //отменяем дальнейшее выполнение метода для кнопки "возврат товара"
+                                    }
+                                }
+                            }
+                            if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).payGoodsToRRO(0, new BigDecimal(txtToPay.getText().replace(",", ".")).setScale(2, BigDecimal.ROUND_HALF_EVEN))) {
+                                //оплата чека неуспешно
+                                log.debug("unable to pay receipt - payCashButton interrupt ");
+                                Alert alert = new Alert(Alert.AlertType.WARNING);
+                                alert.setTitle("Ошибка");
+                                alert.setHeaderText("Невозможно сделать оплату чека возврата товаров в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                                alert.showAndWait();
+                            } else {
+                                MainApp.getGoodsInCheckObservableList().clear();  //оплата успешна, очищаем товары из чека
+                                mainApp.setCheckSummary(BigDecimal.ZERO);  //и суммарно по чеку
+                                if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openPortMiniFP()) {
+                                    MainApp.setCashSumInRRO("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCashInRRO().toString());
+                                    MainApp.setCCSumInRRO("Кредитной картой: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCreditInRRO().toString());
+                                } else {
+                                    MainApp.setCashSumInRRO("Наличными: Н/Д");
+                                    MainApp.setCCSumInRRO("Кредитной картой: Н/Д");
+                                }
 
-        //получаем из файла выбранные товари и группы (десериализация)
-
-     /*   for (GoodsGroup tmp : deserializeGoodsGroup()) {
-            System.out.println(tmp.getCode() + " " + tmp.getName());
+                            }
+                            break;
+                        }
+                        case 1: {//чек открыт для продажи
+                            Alert alertRecQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+                            alertRecQuestion.setTitle("Подтверждение");
+                            alertRecQuestion.setHeaderText("Чек открыт для продажи\nОтменить чек или отменить процесс возврата товара?");
+                            alertRecQuestion.setContentText("'ОК' - отменить чек\t'Отмена' - отказ от вовзрата");
+                            Optional<ButtonType> resultRec = alertRecQuestion.showAndWait();
+                            if (resultRec.isPresent() && resultRec.get() == ButtonType.OK) {
+                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).cancelReceipt()) {
+                                    //отмена чека неуспешно
+                                    log.debug("unable to cancel receipt - goodsReturnButton interrupt");
+                                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                                    alert.setTitle("Ошибка");
+                                    alert.setHeaderText("Ошибка при отмене чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                    alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                                    alert.showAndWait();
+                                }
+                            } else if (resultRec.isPresent() && resultRec.get() == ButtonType.CANCEL) {
+                                log.debug("receipt opened for sale - user selected goodsReturnButton interrupt");
+                            }
+                            break;
+                        }
+                        case 2: {//чек открыт только для оплаты
+                            log.debug("receipt opened only for payment");
+                            Alert alert = new Alert(Alert.AlertType.WARNING);
+                            alert.setTitle("Подтверждение");
+                            alert.setHeaderText("Чек открыт только для оплаты\nЧек возможно отменить только вручную.\nВыключите и включите РРО с нажатием кнопки продвижения ленты");
+                            alert.showAndWait();
+                            break;
+                        }
+                        case 3: {//чек открыт для возврата
+                            Alert alertRecQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+                            alertRecQuestion.setTitle("Подтверждение");
+                            alertRecQuestion.setHeaderText("Чек открыт для возврата\nОтменить чек или отменить процесс возврата товара?");
+                            alertRecQuestion.setContentText("'ОК' - отменить чек\t'Отмена' - отказ от возврата");
+                            Optional<ButtonType> resultRec = alertRecQuestion.showAndWait();
+                            if (resultRec.isPresent() && resultRec.get() == ButtonType.OK) {
+                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).cancelReceipt()) {
+                                    //отмена чека неуспешно
+                                    log.debug("unable to cancel receipt - goodsReturnButton interrupt");
+                                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                                    alert.setTitle("Ошибка");
+                                    alert.setHeaderText("Ошибка при отмене чека в РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                    alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                                    alert.showAndWait();
+                                }
+                            } else if (resultRec.isPresent() && resultRec.get() == ButtonType.CANCEL) {
+                                log.debug("receipt opened for return - user selected goodsReturnButton interrupt");
+                            }
+                            break;
+                        }
+                        case 99: {//состояние чека неопределено
+                            log.debug("receipt status not defined");
+                            Alert alert = new Alert(Alert.AlertType.WARNING);
+                            alert.setTitle("Ошибка");
+                            alert.setHeaderText("Состояние чека не определено\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                            alert.setContentText("Рекомендуется обратиться к администратору\nСлужебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                            alert.showAndWait();
+                            break;
+                        }
+                    }
+                    CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
+                    Stage stage = (Stage) btnGoodsReturn.getScene().getWindow();
+                    stage.close();
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Ошибка");
+                    alert.setHeaderText("Сумма возврата превышает количество наличных в кассе");
+                    alert.showAndWait();
+                }
+            }
+            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
+        } else if (resultRet.isPresent() && resultRet.get() == ButtonType.CANCEL) {
+            //отаказ от возврата
+            Stage stage = (Stage) btnGoodsReturn.getScene().getWindow();
+            stage.close();
         }
-        for (Goods tmp : deserializeGoods()) {
-            System.out.println(tmp.getCode() + " " + tmp.getName() + " " + tmp.getPrice());
-        }
-    */
-        Stage stage = (Stage) btnGoodsReturn.getScene().getWindow();
-        stage.close();
     }
 
 
@@ -553,9 +680,7 @@ public class PayFormController //implements Initializable
             ObjectInputStream in = new ObjectInputStream(Files.newInputStream(Paths.get(selectedGoodsFilePath)));
             goods = (ArrayList<Goods>) in.readObject();
             in.close();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (ClassNotFoundException | IOException e) {
             log.debug("error while deserializing selected goods from file " + e.toString());
         }
         return goods;
@@ -569,9 +694,7 @@ public class PayFormController //implements Initializable
             ObjectInputStream in = new ObjectInputStream(Files.newInputStream(Paths.get(goodsGroupsFilePath)));
             goodsGroups = (ArrayList<GoodsGroup>) in.readObject();
             in.close();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (ClassNotFoundException | IOException e) {
             log.debug("error while deserializing goods group from file " + e.toString());
         }
         return goodsGroups;
