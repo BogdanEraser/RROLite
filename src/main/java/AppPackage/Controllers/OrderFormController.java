@@ -104,18 +104,6 @@ public class OrderFormController //implements Initializable
         return scene;
     }
 
-    public Label getLblRROSumCash() {
-        return lblRROSumCash;
-    }
-
-    public Label getLblRROSumCredit() {
-        return lblRROSumCredit;
-    }
-
-    public TableView<GoodsInCheck> getCheckTableView() {
-        return checkTableView;
-    }
-
     /**
      * Adds autoscroll to JavaFX tableview and selects last added row.
      *

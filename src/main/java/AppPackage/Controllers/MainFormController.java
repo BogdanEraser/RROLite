@@ -13,10 +13,14 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.Cell;
@@ -38,6 +42,8 @@ public class MainFormController //implements Initializable
     private static final Logger log = Logger.getLogger(MainFormController.class);
     private LocalTime currentTime;
     private Scene scene;
+    private Stage stage;
+    private Parent root;
     private static MainApp mainApp;
     @FXML
     private static BorderPane mainForm;
@@ -1024,6 +1030,34 @@ public class MainFormController //implements Initializable
     }
 
     public void setCashInOutButton() {
+        //покажем форму вноса/изъ€ти€
+        try {
+            stage = new Stage();
+            String fxmlFormPath = "/fxml/IncassoForm/IncassoForm.fxml";
+            log.debug("Loading IncassoForm for making cash in or out, into new scene");
+            FXMLLoader fxmlLoader = new FXMLLoader();
+            fxmlLoader.setLocation(MainApp.class.getResource(fxmlFormPath));
+            log.debug("Setting location from FXML - IncassoForm");
+            root = fxmlLoader.load();
+            log.debug("ќтображаем форму вноса/изъ€ти€");
+            stage.setScene(new Scene(root, 800, 500));
+            //stage.initStyle(StageStyle.UNDECORATED);
+            stage.setTitle("—лужебный внос / изъ€тие");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setResizable(false);
+            stage.initOwner(btnCashInOut.getScene().getWindow());
+            stage.initStyle(StageStyle.UTILITY);
+            stage.setOnCloseRequest(windowEvent -> {
+                windowEvent.consume();
+            });
+            // Give the controller access to the main app.
+            IncassoFormController IncassoFormController = fxmlLoader.getController();
+            IncassoFormController.setMainApp(mainApp);
+            stage.showAndWait();
+
+        } catch (IOException e) {
+            log.debug("ќшибка загрузки формы вноса/изъ€ти€ " + e.toString());
+        }
     }
 
     public void setEmptyReceiptButton() {

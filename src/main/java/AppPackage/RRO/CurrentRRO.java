@@ -278,6 +278,7 @@ public class CurrentRRO {
         return cash;
     }
 
+
     /**
      * Метод получения суммы оплат по кредитным картам в РРО
      *
@@ -715,6 +716,35 @@ public class CurrentRRO {
         }
         return false;
     }
+
+
+    /**
+     * Метод вноса и изъятия денег в РРО
+     * @param type int 0 - служебный внос/ 1 - изъятие
+     * @param summ BigDecimal - сумма вноса/изъятия
+     * @return boolean
+     */
+    public boolean cashInOut(int type, BigDecimal summ) {
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                // in_out Внос/Вынос денег
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "in_out;0;0;0;"+type+";"+summ.toString()+";;;").toString())) {
+                    return true;
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                    setLastEvent(Dispatch.call((Dispatch) rro_object, "get_last_event").toString());
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
 
 
     /**

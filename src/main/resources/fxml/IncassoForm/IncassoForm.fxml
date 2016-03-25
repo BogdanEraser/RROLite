@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="AppPackage.Controllers.IncassoFormController">
+    <center>
+        <AnchorPane fx:id="PayForm" BorderPane.alignment="CENTER">
+         <children>
+            <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="20.0" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0">
+               <children>
+                  <VBox alignment="CENTER">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="39.0">
+                           <children>
+                              <Label fx:id="lblRROSumCash" text="RROSumCash" textOverrun="CLIP">
+                                 <font>
+                                    <Font name="Verdana" size="24.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="30.0">
+                           <children>
+                              <TextField fx:id="txtValue" alignment="CENTER_RIGHT" editable="false" prefHeight="50.0" prefWidth="270.0">
+                                 <font>
+                                    <Font name="Verdana" size="28.0" />
+                                 </font>
+                              </TextField>
+                              <Button fx:id="btnBackSpace" mnemonicParsing="false" onAction="#setBtnBackSpace" prefHeight="50.0" prefWidth="120.0" text="&lt;=">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Button>
+                           </children>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="30.0">
+                           <children>
+                              <Button fx:id="btn1" mnemonicParsing="false" onAction="#setBtn1" prefHeight="60.0" prefWidth="120.0" text="1">
+                                 <font>
+                                    <Font name="Verdana" size="24.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="btn2" mnemonicParsing="false" onAction="#setBtn2" prefHeight="60.0" prefWidth="120.0" text="2">
+                                 <font>
+                                    <Font name="Verdana" size="24.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="btn3" mnemonicParsing="false" onAction="#setBtn3" prefHeight="60.0" prefWidth="120.0" text="3">
+                                 <font>
+                                    <Font name="Verdana" size="24.0" />
+                                 </font>
+                              </Button>
+                           </children>
+                           <opaqueInsets>
+                              <Insets />
+                           </opaqueInsets>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="30.0">
+                           <children>
+                              <Button fx:id="btn4" mnemonicParsing="false" onAction="#setBtn4" prefHeight="60.0" prefWidth="120.0" text="4">
+                                 <font>
+                                    <Font name="Verdana" size="24.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="btn5" mnemonicParsing="false" onAction="#setBtn5" prefHeight="60.0" prefWidth="120.0" text="5">
+                                 <font>
+                                    <Font name="Verdana" size="24.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="btn6" mnemonicParsing="false" onAction="#setBtn6" prefHeight="60.0" prefWidth="120.0" text="6">
+                                 <font>
+                                    <Font name="Verdana" size="24.0" />
+                                 </font>
+                              </Button>
+                           </children>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="30.0">
+                           <children>
+                              <Button fx:id="btn7" mnemonicParsing="false" onAction="#setBtn7" prefHeight="60.0" prefWidth="120.0" text="7">
+                                 <font>
+                                    <Font name="Verdana" size="24.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="btn8" mnemonicParsing="false" onAction="#setBtn8" prefHeight="60.0" prefWidth="120.0" text="8">
+                                 <font>
+                                    <Font name="Verdana" size="24.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="btn9" mnemonicParsing="false" onAction="#setBtn9" prefHeight="60.0" prefWidth="120.0" text="9">
+                                 <font>
+                                    <Font name="Verdana" size="24.0" />
+                                 </font>
+                              </Button>
+                           </children>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="30.0">
+                           <children>
+                              <Button fx:id="btnComa" mnemonicParsing="false" onAction="#setBtnComa" prefHeight="60.0" prefWidth="120.0" text=",">
+                                 <font>
+                                    <Font name="Verdana" size="24.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="btn0" mnemonicParsing="false" onAction="#setBtn0" prefHeight="60.0" prefWidth="120.0" text="0">
+                                 <font>
+                                    <Font name="Verdana" size="24.0" />
+                                 </font>
+                              </Button>
+                           </children>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  <VBox alignment="CENTER" spacing="50.0">
+                     <children>
+                        <Button fx:id="btnToRRO" mnemonicParsing="false" onAction="#setToRRO" prefHeight="90.0" prefWidth="300.0" text="Внос в РРО">
+                           <font>
+                              <Font name="Verdana" size="26.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets />
+                           </VBox.margin>
+                        </Button>
+                        <Button fx:id="btnFromRRO" mnemonicParsing="false" onAction="#setFromRRO" prefHeight="90.0" prefWidth="280.0" text="Изъятие из РРО">
+                           <font>
+                              <Font name="Verdana" size="26.0" />
+                           </font>
+                        </Button>
+                        <Button fx:id="btnCancel" cancelButton="true" mnemonicParsing="false" onAction="#setBtnCancel" prefHeight="90.0" prefWidth="280.0" text="Отмена">
+                           <font>
+                              <Font name="Verdana" size="24.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets />
+                           </VBox.margin>
+                        </Button>
+                     </children>
+                     <opaqueInsets>
+                        <Insets />
+                     </opaqueInsets>
+                  </VBox>
+               </children>
+            </HBox>
+         </children>
+        </AnchorPane>
+    </center>
+</BorderPane>
