@@ -7,6 +7,8 @@ import AppPackage.MainApp;
 import AppPackage.RRO.CurrentRRO;
 import AppPackage.Utils.CheckInternetConnnection;
 import AppPackage.Utils.ExcelUtils;
+import AppPackage.Utils.X3Decoder;
+import AppPackage.Utils.X3Result;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -28,6 +30,8 @@ import org.apache.poi.ss.usermodel.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -129,8 +133,12 @@ public class MainFormController //implements Initializable
 
         if (CurrentUser.getInstance().getAccessLevel() < 2) {
             btnSetupRRO.setVisible(true);
+            btnEmptyReceipt.setVisible(true);
+            btnCashInOut.setVisible(true);
         } else {
             btnSetupRRO.setVisible(false);
+            btnEmptyReceipt.setVisible(false);
+            btnCashInOut.setVisible(false);
         }
 
         currentTime = LocalTime.now();
@@ -255,8 +263,8 @@ public class MainFormController //implements Initializable
                             CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
                             Alert alert = new Alert(Alert.AlertType.WARNING);
                             alert.setTitle("Ошибка");
-                            alert.setHeaderText("Невозможно задать время в РРО\nРекомендуется перезагрузить РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
-                            alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                            alert.setHeaderText("Невозможно задать время в РРО\nРекомендуется перезагрузить РРО и задать время вручную\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                            alert.setContentText("При открытой смене нельзя задавать время в РРО\nСлужебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
                             alert.showAndWait();
                             //return; //отменяем дальнейшее выполнение метода для кнопки "Старт"
                         } else {
@@ -704,6 +712,11 @@ public class MainFormController //implements Initializable
                                 }
                                 currentProgress++;
                                 updateProgress(currentProgress, maxProgress);
+                                /*try {
+                                    Thread.sleep(50);
+                                } catch (InterruptedException e) {
+                                    log.debug("thread 'add_plu' interrupted " + e.toString());
+                                }*/
                             }
                         }
                         CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
@@ -722,15 +735,10 @@ public class MainFormController //implements Initializable
 
             if (addpluThread != null) {
                 while (addpluThread.isAlive()) {
-                    try {
-                        Thread.sleep(10);
-                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                        alert.setTitle("Сообщение");
-                        alert.setHeaderText("Обновление товаров в РРО. Подождите...");
-                        alert.showAndWait();
-                    } catch (InterruptedException e) {
-                        log.debug("thread 'add_plu' interrupted " + e.toString());
-                    }
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Сообщение");
+                    alert.setHeaderText("Обновление товаров в РРО. Подождите...");
+                    alert.showAndWait();
                 }
                 log.debug("thread 'add_plu' finished");
             }
@@ -782,9 +790,13 @@ public class MainFormController //implements Initializable
         }
     }
 
+
+    /**
+     * Обработка кнопки выхода
+     */
     public void setExitButton() {
         Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
-        alertQuestion.initOwner(mainApp.getMainStage());
+        //alertQuestion.initOwner(mainApp.getMainStage());
         alertQuestion.setTitle("Подтверждение");
         alertQuestion.setHeaderText("Вы действительно хотите выйти?");
         Optional<ButtonType> result = alertQuestion.showAndWait();
@@ -818,8 +830,8 @@ public class MainFormController //implements Initializable
                                 CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
                                 Alert alert = new Alert(Alert.AlertType.WARNING);
                                 alert.setTitle("Ошибка");
-                                alert.setHeaderText("Невозможно задать время в РРО\nРекомендуется перезагрузить РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
-                                alert.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                                alert.setHeaderText("Невозможно задать время в РРО\nРекомендуется перезагрузить РРО и задать время вручную\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                alert.setContentText("При открытой смене нельзя задавать время в РРО\nСлужебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
                                 alert.showAndWait();
                             } else {
                                 log.debug("successfully have set time to RRO");
@@ -855,8 +867,8 @@ public class MainFormController //implements Initializable
                                 alert.setHeaderText("Длительность смены превышает 24 часа\nРабота с РРО будет недоступна\nПредлагается закрыть смену");
                                 alert.setContentText("Начало смены: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getShiftStartDateTimeFromRRO().format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)));
                                 alert.showAndWait();
-                                CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
-                                return; //отменяем дальнейшее выполнение метода для кнопки "Выход"
+//                                CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
+//                                return; //отменяем дальнейшее выполнение метода для кнопки "Выход"
                             } else {
                                 log.debug("shift duration is more than 23 hours");
                                 Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -884,8 +896,88 @@ public class MainFormController //implements Initializable
 
                         //теперь проверим состояние чека
                         switch (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getReceiptStatusFromRRO()) {
-                            case 0: {//чек закрыт
+                            case 0: {//чек закрыт, НО смена открыта. Сделаем Х-отчеты и сохраним в файл значения сумм в кассе
                                 log.debug("receipt is closed");
+                                //распечатка Х-отчета
+                                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                                alert.setTitle("Информация");
+                                alert.setHeaderText("Распечатка общего дневного Х-отчета на РРО");
+                                alert.showAndWait();
+/*                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).execXReport()) {
+                                    //ошибка при попытке распечатки Х-отчета
+                                    log.debug("error while getting X-report");
+                                    Alert alertError = new Alert(Alert.AlertType.WARNING);
+                                    alertError.setTitle("Ошибка");
+                                    alertError.setHeaderText("Ошибка при печати общего дневного Х-отчета\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                    alertError.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                                    alertError.showAndWait();
+                                }
+*/
+                                //сохранение Х3-отчета по товарам в файл
+                                int maxGoods = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getStatusGoodsOccupiedInRRO();
+                                if (maxGoods == 0) {
+                                    maxGoods = 1;
+                                } //что бы не было ошибки в команде получения Х3 отчета
+                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getXReport(3, 1, maxGoods)) {
+                                    //ошибка при попытке получения файла Х3-отчета
+                                    log.debug("error while getting X-report");
+                                    Alert alertError = new Alert(Alert.AlertType.WARNING);
+                                    alertError.setTitle("Ошибка");
+                                    alertError.setHeaderText("Ошибка при получении файла отчета по товарам (Х3-отчета)\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                    alertError.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                                    alertError.showAndWait();
+                                } else {
+                                    alert = new Alert(Alert.AlertType.INFORMATION);
+                                    alert.setTitle("Информация");
+                                    alert.setHeaderText("Получение отчета по товарам (Х3-отчета) в файл");
+                                    alert.showAndWait();
+
+                                    //==== разбираем файл отчетов x3.bin
+                                    log.debug("decoding x3.bin");
+
+                                    String filename = "x3.bin";
+                                    if ((Files.exists(Paths.get(filename))) && (!Files.isDirectory(Paths.get(filename))) && (Files.isReadable(Paths.get(filename)))) {
+                                        int filesize = 0;
+                                        byte[] bFile = new byte[1];
+                                        try {
+                                            filesize = (int) Files.size(Paths.get(filename));
+                                            bFile = new byte[filesize];
+                                            bFile = Files.readAllBytes(Paths.get(filename));   //читаем все байты в массив байт
+                                        } catch (IOException e) {
+                                            log.debug("unable to get file size for '" + filename + "' : " + e.toString());
+                                        }
+
+                                        ArrayList<X3Result> x3Res = X3Decoder.decodeToArrayList(bFile);
+
+                                        try {
+                                            System.out.println("Расшифрованный файл Х-отчета по товарам");
+                                            for (X3Result aX3ResultArrayList : x3Res) {
+                                                System.out.println(aX3ResultArrayList);
+                                            }
+                                        } catch (NullPointerException e) {
+                                            log.debug("ArrayList<X3Result> has no reference: " + e.toString());
+                                        }
+
+                                    } else {
+                                        log.debug("unable to open x3.bin");
+                                        alert = new Alert(Alert.AlertType.ERROR);
+                                        alert.setTitle("Ошибка");
+                                        alert.setHeaderText("Файл Х-отчета по товарам не найден или не может быть открыт");
+                                        alert.showAndWait();
+                                    }
+                                }
+
+                                alert = new Alert(Alert.AlertType.INFORMATION);
+                                alert.setTitle("Информация");
+                                alert.setHeaderText("Получение дневного Х-отчета в файл");
+                                alert.showAndWait();
+
+
+
+
+
+
+                                /*
                                 //предлагаем сделать Z-отчет
                                 alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
                                 alertQuestion.setTitle("Подтверждение");
@@ -898,7 +990,9 @@ public class MainFormController //implements Initializable
                                     CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
                                     log.debug("shift is opened and receipt is closed - recommendations is given to user and user selected to interrupt setExitButton");
                                     return; //отменяем дальнейшее выполнение метода для кнопки "Выход"
-                                }
+                                }*/
+
+
                                 break;
                             }
                             case 1: {//чек открыт для продажи

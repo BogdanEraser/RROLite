@@ -442,7 +442,7 @@ public class IncassoFormController //implements Initializable
                 }
                 CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
             } else if (resultRet.isPresent() && resultRet.get() == ButtonType.CANCEL) {
-                //отаказ от внесения
+                //отказ от внесения
                 Stage stage = (Stage) btnToRRO.getScene().getWindow();
                 stage.close();
             }

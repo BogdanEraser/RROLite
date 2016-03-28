@@ -692,6 +692,33 @@ public class CurrentRRO {
 
 
     /**
+     * Метод вызова X-отчета в РРО (дневной общий)
+     *
+     * @return boolean
+     */
+    public boolean execXReport() {
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                // execute_X_report Распечатать дневной X-отчет
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "execute_X_report;12321").toString())) {
+                    return true;
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                    setLastEvent(Dispatch.call((Dispatch) rro_object, "get_last_event").toString());
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
+
+    /**
      * Метод печати нулевого чека в РРО
      *
      * @return boolean
@@ -720,6 +747,7 @@ public class CurrentRRO {
 
     /**
      * Метод вноса и изъятия денег в РРО
+     *
      * @param type int 0 - служебный внос/ 1 - изъятие
      * @param summ BigDecimal - сумма вноса/изъятия
      * @return boolean
@@ -730,7 +758,7 @@ public class CurrentRRO {
             }
             case 1: { //мини-фп
                 // in_out Внос/Вынос денег
-                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "in_out;0;0;0;"+type+";"+summ.toString()+";;;").toString())) {
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), "in_out;0;0;0;" + type + ";" + summ.toString() + ";;;").toString())) {
                     return true;
                 } else {
                     setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
@@ -746,13 +774,68 @@ public class CurrentRRO {
     }
 
 
+    /**
+     * Метод получения bin-файла с X-отчетом из РРО
+     *
+     * @return boolean
+     */
+    public boolean getXReport(int repType, int startparam, int endparam) {
+        String par5;
+        String par6;
+        if (repType != 3) {
+            par5 = "";
+            par6 = "";
+        } else {
+            par5 = Integer.toString(startparam);
+            par6 = Integer.toString(endparam);
+        }
+
+        switch (getPrinterType()) {
+            case 0: {
+            }
+            case 1: { //мини-фп
+                /* get_report Сохранить в BIN-файл отчет
+                 *  par1  Тип отчета Целое число
+                 *        0 – отчет Х1
+                 *        1 – отчет Х1 сокращенный
+                 *        2 – отчет Х2
+                 *        3 – отчет Х3 (требует par2, par3 и par4)
+                 *        4 – отчет Х5
+                 *        5 – отчет Х6
+                 *  par2  Передавать/не передавать остаток товара (1/0) Целое число
+                 *  par3  Передавать/не передавать штрих-код товара (1/0)  Игнорируется для фискальных регистраторов
+                 *  par4  Передавать/не передавать наименование товара (1/0) Целое число
+                 *  par5  Стартовый параметр Целое число
+                 *  par6  Конечный параметр Целое число
+                 */
+                String cmd;
+                if (repType != 3) {
+                    cmd = "get_report;" + repType + ";";
+                } else {
+                    cmd = "get_report;" + repType + ";1;1;1;" + par5 + ";" + par6 + ";";
+                }
+                if (Boolean.valueOf(Dispatch.call((Dispatch) rro_object, getDllName(), cmd).toString())) {
+                    return true;
+                } else {
+                    setLastResult(Dispatch.call((Dispatch) rro_object, "get_last_result").toString());
+                    setLastError(Long.parseLong(Dispatch.call((Dispatch) rro_object, "get_last_error").toString()));
+                    setLastEvent(Dispatch.call((Dispatch) rro_object, "get_last_event").toString());
+                }
+                break;
+            }
+            case 2: {
+            }
+        }
+        return false;
+    }
+
 
     /**
      * Метод добавления товаров в базу товаров в РРО
      *
      * @return boolean
      */
-    public boolean addGoodsToRRO(int code, int taxGroup, int sellTypeRRO, String name) {
+    public synchronized boolean addGoodsToRRO(int code, int taxGroup, int sellTypeRRO, String name) {
         switch (getPrinterType()) {
             case 0: {
             }
