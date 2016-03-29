@@ -5,10 +5,7 @@ import AppPackage.Entities.Goods;
 import AppPackage.Entities.GoodsGroup;
 import AppPackage.MainApp;
 import AppPackage.RRO.CurrentRRO;
-import AppPackage.Utils.CheckInternetConnnection;
-import AppPackage.Utils.ExcelUtils;
-import AppPackage.Utils.X3Decoder;
-import AppPackage.Utils.X3Result;
+import AppPackage.Utils.*;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -927,36 +924,53 @@ public class MainFormController //implements Initializable
                                     alertError.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
                                     alertError.showAndWait();
                                 } else {
+                                    String excelFilePath = MainApp.getPathToExchageFolder() + "\\" + MainApp.getSellingPointName() + ".xlsx";
                                     alert = new Alert(Alert.AlertType.INFORMATION);
                                     alert.setTitle("Информация");
-                                    alert.setHeaderText("Получение отчета по товарам (Х3-отчета) в файл");
+                                    alert.setHeaderText("Получение отчета по товарам (Х3-отчета) в файл " + excelFilePath);
                                     alert.showAndWait();
 
-                                    //==== разбираем файл отчетов x3.bin
-                                    log.debug("decoding x3.bin");
-
-                                    String filename = "x3.bin";
-                                    if ((Files.exists(Paths.get(filename))) && (!Files.isDirectory(Paths.get(filename))) && (Files.isReadable(Paths.get(filename)))) {
+                                    //==== разбираем файл отчетов x1.bin
+                                    log.debug("decoding x1.bin");
+                                    X1FullResult x1Res = new X1FullResult();
+                                    String x1filename = "x1.bin";
+                                    if ((Files.exists(Paths.get(x1filename))) & (!Files.isDirectory(Paths.get(x1filename))) & (Files.isReadable(Paths.get(x1filename)))) {
                                         int filesize = 0;
                                         byte[] bFile = new byte[1];
                                         try {
-                                            filesize = (int) Files.size(Paths.get(filename));
+                                            filesize = (int) Files.size(Paths.get(x1filename));
                                             bFile = new byte[filesize];
-                                            bFile = Files.readAllBytes(Paths.get(filename));   //читаем все байты в массив байт
+                                            bFile = Files.readAllBytes(Paths.get(x1filename));   //читаем все байты в массив байт
                                         } catch (IOException e) {
-                                            log.debug("unable to get file size for '" + filename + "' : " + e.toString());
+                                            log.debug("unable to get file size for '" + x1filename + "' : " + e.toString());
                                         }
 
-                                        ArrayList<X3Result> x3Res = X3Decoder.decodeToArrayList(bFile);
+                                        x1Res = XRepUtil.decodeX1Full(bFile);
 
+                                    } else {
+                                        log.debug("unable to open x1.bin");
+                                        alert = new Alert(Alert.AlertType.ERROR);
+                                        alert.setTitle("Ошибка");
+                                        alert.setHeaderText("Файл полного дневного Х-отчета не найден или не может быть открыт");
+                                        alert.showAndWait();
+                                    }
+
+                                    //==== разбираем файл отчетов x3.bin
+                                    log.debug("decoding x3.bin");
+                                    ArrayList<X3Result> x3Res = new ArrayList<X3Result>();
+                                    String x3filename = "x3.bin";
+                                    if ((Files.exists(Paths.get(x3filename))) & (!Files.isDirectory(Paths.get(x3filename))) & (Files.isReadable(Paths.get(x3filename)))) {
+                                        int filesize = 0;
+                                        byte[] bFile = new byte[1];
                                         try {
-                                            System.out.println("Расшифрованный файл Х-отчета по товарам");
-                                            for (X3Result aX3ResultArrayList : x3Res) {
-                                                System.out.println(aX3ResultArrayList);
-                                            }
-                                        } catch (NullPointerException e) {
-                                            log.debug("ArrayList<X3Result> has no reference: " + e.toString());
+                                            filesize = (int) Files.size(Paths.get(x3filename));
+                                            bFile = new byte[filesize];
+                                            bFile = Files.readAllBytes(Paths.get(x3filename));   //читаем все байты в массив байт
+                                        } catch (IOException e) {
+                                            log.debug("unable to get file size for '" + x3filename + "' : " + e.toString());
                                         }
+
+                                        x3Res = XRepUtil.decodeX3ToArrayList(bFile);
 
                                     } else {
                                         log.debug("unable to open x3.bin");
@@ -965,6 +979,19 @@ public class MainFormController //implements Initializable
                                         alert.setHeaderText("Файл Х-отчета по товарам не найден или не может быть открыт");
                                         alert.showAndWait();
                                     }
+
+
+                                    if (!XRepUtil.writeToXlsx(x1Res, x3Res, excelFilePath, "Х-отчет дневной полный", "Х-отчет по товарам")) {
+                                        //ошибка при попытке записи Х3-отчета в файл xlsx
+                                        log.debug("error while writing X-reports to xlsx file");
+                                        Alert alertError = new Alert(Alert.AlertType.WARNING);
+                                        alertError.setTitle("Ошибка");
+                                        alertError.setHeaderText("Ошибка при создании xlsx-файла с отчетами (полного дневного и по товарам)");
+                                        alertError.setContentText("Возможные причины: \n- xlsx-файл открыт для редактирования в другой программе \n- xlsx-файл недоступен для записи (диск переполнен)");
+                                        alertError.showAndWait();
+                                    }
+
+
                                 }
 
                                 alert = new Alert(Alert.AlertType.INFORMATION);

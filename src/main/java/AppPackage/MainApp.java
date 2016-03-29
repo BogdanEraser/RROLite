@@ -37,7 +37,7 @@ public class MainApp extends Application {
     public ArrayList<Goods> allGoodsArrayList; //вообще все возможные товары
     public ArrayList<Goods> allSelectedGoodsArrayList; //все товары, избранные для продажи
     public ArrayList<GoodsGroup> allGoodsGroupsArrayList; //все группы товаров
-    public static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList(goodsInCheck -> new Observable[]{goodsInCheck.quantityProperty()});
+    private static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList(goodsInCheck -> new Observable[]{goodsInCheck.quantityProperty()});
     /*public static ObservableList<GoodsInCheck> goodsInCheckObservableList = FXCollections.observableArrayList(new Callback<GoodsInCheck, Observable[]>() {
         @Override
         public Observable[] call(GoodsInCheck goodsInCheck) {
@@ -48,10 +48,12 @@ public class MainApp extends Application {
     private static SimpleStringProperty CashSumInRRO;
     private static SimpleStringProperty CCSumInRRO;
     private Stage MainStage;
+    private static String sellingPointName;
     private static String pathToDataFile;
     private static int printerType;
     private static int printerPort;
     private static int printerPortSpeed;
+    private static String pathToExchageFolder;
     public OrderFormController orderFormController;
 
     /**
@@ -82,14 +84,18 @@ public class MainApp extends Application {
             if (Files.exists(Paths.get(setupFilePath)) & (Files.size(Paths.get(setupFilePath)) <= 1024)) {
                 List<String> lines = Files.readAllLines(Paths.get(setupFilePath), Charset.defaultCharset());
                 String[] splittedLines = lines.get(0).split(";");
-                pathToDataFile = splittedLines[0];
-                printerType = Integer.parseInt(splittedLines[1]);
-                printerPort = Integer.parseInt(splittedLines[2]);
-                printerPortSpeed = Integer.parseInt(splittedLines[3]);
+                sellingPointName = splittedLines[0];
+                pathToDataFile = splittedLines[1];
+                printerType = Integer.parseInt(splittedLines[2]);
+                printerPort = Integer.parseInt(splittedLines[3]);
+                printerPortSpeed = Integer.parseInt(splittedLines[4]);
+                pathToExchageFolder = splittedLines[5];
+                log.debug("sellingPointName: " + sellingPointName);
                 log.debug("pathToDataFile: " + pathToDataFile);
                 log.debug("printerType: " + printerType);
                 log.debug("printerPort: " + printerPort);
                 log.debug("printerPortSpeed: " + printerPortSpeed);
+                log.debug("pathToExchangeFolder: " + pathToExchageFolder);
             }
         } catch (IOException e) {
             log.debug("error getting setup data from rro.ini" + e.toString());
@@ -173,6 +179,22 @@ public class MainApp extends Application {
 
     public static int getPrinterType() {
         return printerType;
+    }
+
+    public static String getPathToExchageFolder() {
+        return pathToExchageFolder;
+    }
+
+    public static void setPathToExchageFolder(String pathToExchageFolder) {
+        MainApp.pathToExchageFolder = pathToExchageFolder;
+    }
+
+    public static String getSellingPointName() {
+        return sellingPointName;
+    }
+
+    public static void setSellingPointName(String sellingPointName) {
+        MainApp.sellingPointName = sellingPointName;
     }
 
     @Override
