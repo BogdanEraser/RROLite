@@ -93,459 +93,523 @@ public class X1FullResult {
     public X1FullResult() {
     }
 
-    public int getTaxNum() {
+     int getTaxNum() {
         return TaxNum;
     }
 
-    public void setTaxNum(int taxNum) {
+     void setTaxNum(int taxNum) {
         TaxNum = taxNum;
     }
 
-    public String getData() {
+     String getData() {
         return Data;
     }
 
-    public void setData(String data) {
+     void setData(String data) {
         Data = data;
     }
 
-    public int getTaxParam() {
+     int getTaxParam() {
         return TaxParam;
     }
 
-    public void setTaxParam(int taxParam) {
+     void setTaxParam(int taxParam) {
         TaxParam = taxParam;
     }
 
-    public BigDecimal getTaxVal1() {
+     BigDecimal getTaxVal1() {
         return TaxVal1;
     }
 
-    public void setTaxVal1(BigDecimal taxVal1) {
+     void setTaxVal1(BigDecimal taxVal1) {
         TaxVal1 = taxVal1;
     }
 
-    public BigDecimal getAddTaxVal1() {
+     BigDecimal getAddTaxVal1() {
         return AddTaxVal1;
     }
 
-    public void setAddTaxVal1(BigDecimal addTaxVal1) {
+     void setAddTaxVal1(BigDecimal addTaxVal1) {
         AddTaxVal1 = addTaxVal1;
     }
 
-    public String getAddTaxValName1() {
+     String getAddTaxValName1() {
         return AddTaxValName1;
     }
 
-    public void setAddTaxValName1(String addTaxValName1) {
+     void setAddTaxValName1(String addTaxValName1) {
         AddTaxValName1 = addTaxValName1;
     }
 
-    public BigDecimal getTaxVal2() {
+     BigDecimal getTaxVal2() {
         return TaxVal2;
     }
 
-    public void setTaxVal2(BigDecimal taxVal2) {
+     void setTaxVal2(BigDecimal taxVal2) {
         TaxVal2 = taxVal2;
     }
 
-    public BigDecimal getAddTaxVal2() {
+     BigDecimal getAddTaxVal2() {
         return AddTaxVal2;
     }
 
-    public void setAddTaxVal2(BigDecimal addTaxVal2) {
+     void setAddTaxVal2(BigDecimal addTaxVal2) {
         AddTaxVal2 = addTaxVal2;
     }
 
-    public String getAddTaxValName2() {
+     String getAddTaxValName2() {
         return AddTaxValName2;
     }
 
-    public void setAddTaxValName2(String addTaxValName2) {
+     void setAddTaxValName2(String addTaxValName2) {
         AddTaxValName2 = addTaxValName2;
     }
 
-    public BigDecimal getTaxVal3() {
+     BigDecimal getTaxVal3() {
         return TaxVal3;
     }
 
-    public void setTaxVal3(BigDecimal taxVal3) {
+     void setTaxVal3(BigDecimal taxVal3) {
         TaxVal3 = taxVal3;
     }
 
-    public BigDecimal getAddTaxVal3() {
+     BigDecimal getAddTaxVal3() {
         return AddTaxVal3;
     }
 
-    public void setAddTaxVal3(BigDecimal addTaxVal3) {
+     void setAddTaxVal3(BigDecimal addTaxVal3) {
         AddTaxVal3 = addTaxVal3;
     }
 
-    public String getAddTaxValName3() {
+     String getAddTaxValName3() {
         return AddTaxValName3;
     }
 
-    public void setAddTaxValName3(String addTaxValName3) {
+     void setAddTaxValName3(String addTaxValName3) {
         AddTaxValName3 = addTaxValName3;
     }
 
-    public BigDecimal getTaxVal4() {
+     BigDecimal getTaxVal4() {
         return TaxVal4;
     }
 
-    public void setTaxVal4(BigDecimal taxVal4) {
+     void setTaxVal4(BigDecimal taxVal4) {
         TaxVal4 = taxVal4;
     }
 
-    public BigDecimal getAddTaxVal4() {
+     BigDecimal getAddTaxVal4() {
         return AddTaxVal4;
     }
 
-    public void setAddTaxVal4(BigDecimal addTaxVal4) {
+     void setAddTaxVal4(BigDecimal addTaxVal4) {
         AddTaxVal4 = addTaxVal4;
     }
 
-    public String getAddTaxValName4() {
+     String getAddTaxValName4() {
         return AddTaxValName4;
     }
 
-    public void setAddTaxValName4(String addTaxValName4) {
+     void setAddTaxValName4(String addTaxValName4) {
         AddTaxValName4 = addTaxValName4;
     }
 
-    public BigDecimal getTaxVal5() {
+     BigDecimal getTaxVal5() {
         return TaxVal5;
     }
 
-    public void setTaxVal5(BigDecimal taxVal5) {
+     void setTaxVal5(BigDecimal taxVal5) {
         TaxVal5 = taxVal5;
     }
 
-    public BigDecimal getAddTaxVal5() {
+     BigDecimal getAddTaxVal5() {
         return AddTaxVal5;
     }
 
-    public void setAddTaxVal5(BigDecimal addTaxVal5) {
+    void setAddTaxVal5(BigDecimal addTaxVal5) {
         AddTaxVal5 = addTaxVal5;
     }
 
-    public String getAddTaxValName5() {
+     String getAddTaxValName5() {
         return AddTaxValName5;
     }
 
-    public void setAddTaxValName5(String addTaxValName5) {
+     void setAddTaxValName5(String addTaxValName5) {
         AddTaxValName5 = addTaxValName5;
     }
 
-    public int getZ1Num() {
+     int getZ1Num() {
         return Z1Num;
     }
 
-    public void setZ1Num(int z1Num) {
+     void setZ1Num(int z1Num) {
         Z1Num = z1Num;
     }
 
-    public BigDecimal getTurnoverIn1() {
+     BigDecimal getTurnoverIn1() {
         return TurnoverIn1;
     }
 
-    public void setTurnoverIn1(BigDecimal turnoverIn1) {
+     void setTurnoverIn1(BigDecimal turnoverIn1) {
         TurnoverIn1 = turnoverIn1;
     }
 
-    public BigDecimal getTurnoverIn2() {
+     BigDecimal getTurnoverIn2() {
         return TurnoverIn2;
     }
 
-    public void setTurnoverIn2(BigDecimal turnoverIn2) {
+     void setTurnoverIn2(BigDecimal turnoverIn2) {
         TurnoverIn2 = turnoverIn2;
     }
 
-    public BigDecimal getTurnoverIn3() {
+     BigDecimal getTurnoverIn3() {
         return TurnoverIn3;
     }
 
-    public void setTurnoverIn3(BigDecimal turnoverIn3) {
+     void setTurnoverIn3(BigDecimal turnoverIn3) {
         TurnoverIn3 = turnoverIn3;
     }
 
-    public BigDecimal getTurnoverIn4() {
+     BigDecimal getTurnoverIn4() {
         return TurnoverIn4;
     }
 
-    public void setTurnoverIn4(BigDecimal turnoverIn4) {
+     void setTurnoverIn4(BigDecimal turnoverIn4) {
         TurnoverIn4 = turnoverIn4;
     }
 
-    public BigDecimal getTurnoverIn5() {
+     BigDecimal getTurnoverIn5() {
         return TurnoverIn5;
     }
 
-    public void setTurnoverIn5(BigDecimal turnoverIn5) {
+     void setTurnoverIn5(BigDecimal turnoverIn5) {
         TurnoverIn5 = turnoverIn5;
     }
 
-    public BigDecimal getTurnoverIn6() {
+     BigDecimal getTurnoverIn6() {
         return TurnoverIn6;
     }
 
-    public void setTurnoverIn6(BigDecimal turnoverIn6) {
+     void setTurnoverIn6(BigDecimal turnoverIn6) {
         TurnoverIn6 = turnoverIn6;
     }
 
-    public BigDecimal getTaxIn1() {
+     BigDecimal getTaxIn1() {
         return TaxIn1;
     }
 
-    public void setTaxIn1(BigDecimal taxIn1) {
+     void setTaxIn1(BigDecimal taxIn1) {
         TaxIn1 = taxIn1;
     }
 
-    public BigDecimal getTaxIn2() {
+     BigDecimal getTaxIn2() {
         return TaxIn2;
     }
 
-    public void setTaxIn2(BigDecimal taxIn2) {
+     void setTaxIn2(BigDecimal taxIn2) {
         TaxIn2 = taxIn2;
     }
 
-    public BigDecimal getTaxIn3() {
+     BigDecimal getTaxIn3() {
         return TaxIn3;
     }
 
-    public void setTaxIn3(BigDecimal taxIn3) {
+     void setTaxIn3(BigDecimal taxIn3) {
         TaxIn3 = taxIn3;
     }
 
-    public BigDecimal getTaxIn4() {
+     BigDecimal getTaxIn4() {
         return TaxIn4;
     }
 
-    public void setTaxIn4(BigDecimal taxIn4) {
+     void setTaxIn4(BigDecimal taxIn4) {
         TaxIn4 = taxIn4;
     }
 
-    public BigDecimal getTaxIn5() {
+     BigDecimal getTaxIn5() {
         return TaxIn5;
     }
 
-    public void setTaxIn5(BigDecimal taxIn5) {
+     void setTaxIn5(BigDecimal taxIn5) {
         TaxIn5 = taxIn5;
     }
 
-    public BigDecimal getTaxIn6() {
+     BigDecimal getTaxIn6() {
         return TaxIn6;
     }
 
-    public void setTaxIn6(BigDecimal taxIn6) {
+     void setTaxIn6(BigDecimal taxIn6) {
         TaxIn6 = taxIn6;
     }
 
-    public BigDecimal getAddTaxIn1() {
+     BigDecimal getAddTaxIn1() {
         return AddTaxIn1;
     }
 
-    public void setAddTaxIn1(BigDecimal addTaxIn1) {
+     void setAddTaxIn1(BigDecimal addTaxIn1) {
         AddTaxIn1 = addTaxIn1;
     }
 
-    public BigDecimal getAddTaxIn2() {
+     BigDecimal getAddTaxIn2() {
         return AddTaxIn2;
     }
 
-    public void setAddTaxIn2(BigDecimal addTaxIn2) {
+     void setAddTaxIn2(BigDecimal addTaxIn2) {
         AddTaxIn2 = addTaxIn2;
     }
 
-    public BigDecimal getAddTaxIn3() {
+     BigDecimal getAddTaxIn3() {
         return AddTaxIn3;
     }
 
-    public void setAddTaxIn3(BigDecimal addTaxIn3) {
+     void setAddTaxIn3(BigDecimal addTaxIn3) {
         AddTaxIn3 = addTaxIn3;
     }
 
-    public BigDecimal getAddTaxIn4() {
+     BigDecimal getAddTaxIn4() {
         return AddTaxIn4;
     }
 
-    public void setAddTaxIn4(BigDecimal addTaxIn4) {
+     void setAddTaxIn4(BigDecimal addTaxIn4) {
         AddTaxIn4 = addTaxIn4;
     }
 
-    public BigDecimal getAddTaxIn5() {
+     BigDecimal getAddTaxIn5() {
         return AddTaxIn5;
     }
 
-    public void setAddTaxIn5(BigDecimal addTaxIn5) {
+     void setAddTaxIn5(BigDecimal addTaxIn5) {
         AddTaxIn5 = addTaxIn5;
     }
 
-    public BigDecimal getAddTaxIn6() {
+     BigDecimal getAddTaxIn6() {
         return AddTaxIn6;
     }
 
-    public void setAddTaxIn6(BigDecimal addTaxIn6) {
+     void setAddTaxIn6(BigDecimal addTaxIn6) {
         AddTaxIn6 = addTaxIn6;
     }
 
-    public BigDecimal getTurnoverOut1() {
+     BigDecimal getTurnoverOut1() {
         return TurnoverOut1;
     }
 
-    public void setTurnoverOut1(BigDecimal turnoverOut1) {
+     void setTurnoverOut1(BigDecimal turnoverOut1) {
         TurnoverOut1 = turnoverOut1;
     }
 
-    public BigDecimal getTurnoverOut2() {
+     BigDecimal getTurnoverOut2() {
         return TurnoverOut2;
     }
 
-    public void setTurnoverOut2(BigDecimal turnoverOut2) {
+     void setTurnoverOut2(BigDecimal turnoverOut2) {
         TurnoverOut2 = turnoverOut2;
     }
 
-    public BigDecimal getTurnoverOut3() {
+     BigDecimal getTurnoverOut3() {
         return TurnoverOut3;
     }
 
-    public void setTurnoverOut3(BigDecimal turnoverOut3) {
+     void setTurnoverOut3(BigDecimal turnoverOut3) {
         TurnoverOut3 = turnoverOut3;
     }
 
-    public BigDecimal getTurnoverOut4() {
+     BigDecimal getTurnoverOut4() {
         return TurnoverOut4;
     }
 
-    public void setTurnoverOut4(BigDecimal turnoverOut4) {
+     void setTurnoverOut4(BigDecimal turnoverOut4) {
         TurnoverOut4 = turnoverOut4;
     }
 
-    public BigDecimal getTurnoverOut5() {
+     BigDecimal getTurnoverOut5() {
         return TurnoverOut5;
     }
 
-    public void setTurnoverOut5(BigDecimal turnoverOut5) {
+     void setTurnoverOut5(BigDecimal turnoverOut5) {
         TurnoverOut5 = turnoverOut5;
     }
 
-    public BigDecimal getTurnoverOut6() {
+     BigDecimal getTurnoverOut6() {
         return TurnoverOut6;
     }
 
-    public void setTurnoverOut6(BigDecimal turnoverOut6) {
+     void setTurnoverOut6(BigDecimal turnoverOut6) {
         TurnoverOut6 = turnoverOut6;
     }
 
-    public BigDecimal getTaxOut1() {
+     BigDecimal getTaxOut1() {
         return TaxOut1;
     }
 
-    public void setTaxOut1(BigDecimal taxOut1) {
+     void setTaxOut1(BigDecimal taxOut1) {
         TaxOut1 = taxOut1;
     }
 
-    public BigDecimal getTaxOut2() {
+     BigDecimal getTaxOut2() {
         return TaxOut2;
     }
 
-    public void setTaxOut2(BigDecimal taxOut2) {
+     void setTaxOut2(BigDecimal taxOut2) {
         TaxOut2 = taxOut2;
     }
 
-    public BigDecimal getTaxOut3() {
+     BigDecimal getTaxOut3() {
         return TaxOut3;
     }
 
-    public void setTaxOut3(BigDecimal taxOut3) {
+     void setTaxOut3(BigDecimal taxOut3) {
         TaxOut3 = taxOut3;
     }
 
-    public BigDecimal getTaxOut4() {
+     BigDecimal getTaxOut4() {
         return TaxOut4;
     }
 
-    public void setTaxOut4(BigDecimal taxOut4) {
+     void setTaxOut4(BigDecimal taxOut4) {
         TaxOut4 = taxOut4;
     }
 
-    public BigDecimal getTaxOut5() {
+     BigDecimal getTaxOut5() {
         return TaxOut5;
     }
 
-    public void setTaxOut5(BigDecimal taxOut5) {
+     void setTaxOut5(BigDecimal taxOut5) {
         TaxOut5 = taxOut5;
     }
 
-    public BigDecimal getTaxOut6() {
+     BigDecimal getTaxOut6() {
         return TaxOut6;
     }
 
-    public void setTaxOut6(BigDecimal taxOut6) {
+     void setTaxOut6(BigDecimal taxOut6) {
         TaxOut6 = taxOut6;
     }
 
-    public BigDecimal getAddTaxOut1() {
+     BigDecimal getAddTaxOut1() {
         return AddTaxOut1;
     }
 
-    public void setAddTaxOut1(BigDecimal addTaxOut1) {
+     void setAddTaxOut1(BigDecimal addTaxOut1) {
         AddTaxOut1 = addTaxOut1;
     }
 
-    public BigDecimal getAddTaxOut2() {
+     BigDecimal getAddTaxOut2() {
         return AddTaxOut2;
     }
 
-    public void setAddTaxOut2(BigDecimal addTaxOut2) {
+     void setAddTaxOut2(BigDecimal addTaxOut2) {
         AddTaxOut2 = addTaxOut2;
     }
 
-    public BigDecimal getAddTaxOut3() {
+     BigDecimal getAddTaxOut3() {
         return AddTaxOut3;
     }
 
-    public void setAddTaxOut3(BigDecimal addTaxOut3) {
+     void setAddTaxOut3(BigDecimal addTaxOut3) {
         AddTaxOut3 = addTaxOut3;
     }
 
-    public BigDecimal getAddTaxOut4() {
+     BigDecimal getAddTaxOut4() {
         return AddTaxOut4;
     }
 
-    public void setAddTaxOut4(BigDecimal addTaxOut4) {
+     void setAddTaxOut4(BigDecimal addTaxOut4) {
         AddTaxOut4 = addTaxOut4;
     }
 
-    public BigDecimal getAddTaxOut5() {
+     BigDecimal getAddTaxOut5() {
         return AddTaxOut5;
     }
 
-    public void setAddTaxOut5(BigDecimal addTaxOut5) {
+     void setAddTaxOut5(BigDecimal addTaxOut5) {
         AddTaxOut5 = addTaxOut5;
     }
 
-    public BigDecimal getAddTaxOut6() {
+     BigDecimal getAddTaxOut6() {
         return AddTaxOut6;
     }
 
-    public void setAddTaxOut6(BigDecimal addTaxOut6) {
+     void setAddTaxOut6(BigDecimal addTaxOut6) {
         AddTaxOut6 = addTaxOut6;
     }
 
-    public int getChecksIn() {
+     int getChecksIn() {
         return ChecksIn;
     }
 
-    public void setChecksIn(int checksIn) {
+     void setChecksIn(int checksIn) {
         ChecksIn = checksIn;
     }
 
-    public int getChecksOut() {
+     int getChecksOut() {
         return ChecksOut;
     }
 
-    public void setChecksOut(int checksOut) {
+     void setChecksOut(int checksOut) {
         ChecksOut = checksOut;
+    }
+
+
+    @Override
+    public String toString() {
+        return "X1FullResult{" +
+                "TaxNum=" + TaxNum +
+                ", Data='" + Data + '\'' +
+                ", TaxParam=" + TaxParam +
+                ", TaxVal1=" + TaxVal1 +
+                ", AddTaxVal1=" + AddTaxVal1 +
+                ", AddTaxValName1='" + AddTaxValName1 + '\'' +
+                ", TaxVal2=" + TaxVal2 +
+                ", AddTaxVal2=" + AddTaxVal2 +
+                ", AddTaxValName2='" + AddTaxValName2 + '\'' +
+                ", TaxVal3=" + TaxVal3 +
+                ", AddTaxVal3=" + AddTaxVal3 +
+                ", AddTaxValName3='" + AddTaxValName3 + '\'' +
+                ", TaxVal4=" + TaxVal4 +
+                ", AddTaxVal4=" + AddTaxVal4 +
+                ", AddTaxValName4='" + AddTaxValName4 + '\'' +
+                ", TaxVal5=" + TaxVal5 +
+                ", AddTaxVal5=" + AddTaxVal5 +
+                ", AddTaxValName5='" + AddTaxValName5 + '\'' +
+                ", Z1Num=" + Z1Num +
+                ", TurnoverIn1=" + TurnoverIn1 +
+                ", TurnoverIn2=" + TurnoverIn2 +
+                ", TurnoverIn3=" + TurnoverIn3 +
+                ", TurnoverIn4=" + TurnoverIn4 +
+                ", TurnoverIn5=" + TurnoverIn5 +
+                ", TurnoverIn6=" + TurnoverIn6 +
+                ", TaxIn1=" + TaxIn1 +
+                ", TaxIn2=" + TaxIn2 +
+                ", TaxIn3=" + TaxIn3 +
+                ", TaxIn4=" + TaxIn4 +
+                ", TaxIn5=" + TaxIn5 +
+                ", TaxIn6=" + TaxIn6 +
+                ", AddTaxIn1=" + AddTaxIn1 +
+                ", AddTaxIn2=" + AddTaxIn2 +
+                ", AddTaxIn3=" + AddTaxIn3 +
+                ", AddTaxIn4=" + AddTaxIn4 +
+                ", AddTaxIn5=" + AddTaxIn5 +
+                ", AddTaxIn6=" + AddTaxIn6 +
+                ", TurnoverOut1=" + TurnoverOut1 +
+                ", TurnoverOut2=" + TurnoverOut2 +
+                ", TurnoverOut3=" + TurnoverOut3 +
+                ", TurnoverOut4=" + TurnoverOut4 +
+                ", TurnoverOut5=" + TurnoverOut5 +
+                ", TurnoverOut6=" + TurnoverOut6 +
+                ", TaxOut1=" + TaxOut1 +
+                ", TaxOut2=" + TaxOut2 +
+                ", TaxOut3=" + TaxOut3 +
+                ", TaxOut4=" + TaxOut4 +
+                ", TaxOut5=" + TaxOut5 +
+                ", TaxOut6=" + TaxOut6 +
+                ", AddTaxOut1=" + AddTaxOut1 +
+                ", AddTaxOut2=" + AddTaxOut2 +
+                ", AddTaxOut3=" + AddTaxOut3 +
+                ", AddTaxOut4=" + AddTaxOut4 +
+                ", AddTaxOut5=" + AddTaxOut5 +
+                ", AddTaxOut6=" + AddTaxOut6 +
+                ", ChecksIn=" + ChecksIn +
+                ", ChecksOut=" + ChecksOut +
+                '}';
     }
 }

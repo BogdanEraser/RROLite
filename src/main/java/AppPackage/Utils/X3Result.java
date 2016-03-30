@@ -58,107 +58,107 @@ public class X3Result {
                 '}';
     }
 
-    public int getCode() {
+     int getCode() {
         return code;
     }
 
-    public void setCode(int code) {
+     void setCode(int code) {
         this.code = code;
     }
 
-    public BigDecimal getPrice() {
+     BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(BigDecimal price) {
+     void setPrice(BigDecimal price) {
         this.price = price;
     }
 
-    public String getName() {
+     String getName() {
         return name;
     }
 
-    public void setName(String name) {
+     void setName(String name) {
         this.name = name;
     }
 
-    public String getBarcode() {
+     String getBarcode() {
         return barcode;
     }
 
-    public void setBarcode(String barcode) {
+     void setBarcode(String barcode) {
         this.barcode = barcode;
     }
 
-    public BigDecimal getQty() {
+     BigDecimal getQty() {
         return qty;
     }
 
-    public void setQty(BigDecimal qty) {
+     void setQty(BigDecimal qty) {
         this.qty = qty;
     }
 
-    public BigDecimal getQtyIn() {
+     BigDecimal getQtyIn() {
         return qtyIn;
     }
 
-    public void setQtyIn(BigDecimal qtyIn) {
+     void setQtyIn(BigDecimal qtyIn) {
         this.qtyIn = qtyIn;
     }
 
-    public BigDecimal getMRKPIn() {
+     BigDecimal getMRKPIn() {
         return MRKPIn;
     }
 
-    public void setMRKPIn(BigDecimal MRKPIn) {
+     void setMRKPIn(BigDecimal MRKPIn) {
         this.MRKPIn = MRKPIn;
     }
 
-    public BigDecimal getRDCTIn() {
+     BigDecimal getRDCTIn() {
         return RDCTIn;
     }
 
-    public void setRDCTIn(BigDecimal RDCTIn) {
+     void setRDCTIn(BigDecimal RDCTIn) {
         this.RDCTIn = RDCTIn;
     }
 
-    public BigDecimal getTRNOVRIn() {
+     BigDecimal getTRNOVRIn() {
         return TRNOVRIn;
     }
 
-    public void setTRNOVRIn(BigDecimal TRNOVRIn) {
+     void setTRNOVRIn(BigDecimal TRNOVRIn) {
         this.TRNOVRIn = TRNOVRIn;
     }
 
-    public BigDecimal getQtyOut() {
+     BigDecimal getQtyOut() {
         return qtyOut;
     }
 
-    public void setQtyOut(BigDecimal qtyOut) {
+     void setQtyOut(BigDecimal qtyOut) {
         this.qtyOut = qtyOut;
     }
 
-    public BigDecimal getMRKPOut() {
+     BigDecimal getMRKPOut() {
         return MRKPOut;
     }
 
-    public void setMRKPOut(BigDecimal MRKPOut) {
+     void setMRKPOut(BigDecimal MRKPOut) {
         this.MRKPOut = MRKPOut;
     }
 
-    public BigDecimal getRDCTOut() {
+     BigDecimal getRDCTOut() {
         return RDCTOut;
     }
 
-    public void setRDCTOut(BigDecimal RDCTOut) {
+     void setRDCTOut(BigDecimal RDCTOut) {
         this.RDCTOut = RDCTOut;
     }
 
-    public BigDecimal getTRNOVROut() {
+     BigDecimal getTRNOVROut() {
         return TRNOVROut;
     }
 
-    public void setTRNOVROut(BigDecimal TRNOVROut) {
+     void setTRNOVROut(BigDecimal TRNOVROut) {
         this.TRNOVROut = TRNOVROut;
     }
 }

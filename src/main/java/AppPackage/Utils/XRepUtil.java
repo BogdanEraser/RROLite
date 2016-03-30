@@ -33,28 +33,28 @@ public class XRepUtil {
     /**
      * Обработка массива байт из файла x1.bin
      * <p>
-     * <TNUM> 4 двоичный Номер записи о налогах
-     * <DATA> 4 двоичный дата записи ставок НДС
+     * TNUM 4 двоичный Номер записи о налогах
+     * DATA 4 двоичный дата записи ставок НДС
      * байт 1 Дата, Байт 2 месяц, Байты 3,4 год
-     * <TAX_F> 1 бинарный Бит 3-7 Не используются
+     * TAX_F 1 бинарный Бит 3-7 Не используются
      * Бит 2 0 Сумма дополнительного сбора вычисляется без учета НДС
      * 1 Сумма дополнительного сбора вычисляется с учетом НДС
      * Бит 1 0 Дополнительные сборы запрещены
      * 1 Дополнительные сборы разрешены
      * Бит 0 0 НДС не включен в цену
      * 1 НДС включен в цену
-     * <TAX_VALn> 2 двоичный Значение n-ой ставки НДС
-     * <ADD_TAX_VALn> 2 двоичный Значение n-ой ставки дополнительного сбора
-     * <ADD_TAX_NAMEn> 20 текст Название n-го дополнительного сбора
-     * <Z1_NUM> 2 двоичный номер текущего Z отчета
-     * <TURNOVERn_IN> 8 двоичный Оборот по ставке n, продажи
-     * <TAXn_IN> 8 двоичный налог по ставке n, продажи
-     * <ADD_TAXn_IN> 8 двоичный сбор по ставке n, продажи
-     * <TURNOVERn_OUT> 8 двоичный Оборот по ставке n, возвраты
-     * <TAXn_OUT> 8 двоичный налог по ставке n, возвраты
-     * <ADD_TAXn_OUT> 8 двоичный сбор по ставке n, возвраты
-     * <CHECKS_IN> 4 двоичный Количество чеков, продажи
-     * <CHECKS_OUT> 4 двоичный Количество чеков, возвраты
+     * TAX_VALn 2 двоичный Значение n-ой ставки НДС
+     * ADD_TAX_VALn 2 двоичный Значение n-ой ставки дополнительного сбора
+     * ADD_TAX_NAMEn 20 текст Название n-го дополнительного сбора
+     * Z1_NUM 2 двоичный номер текущего Z отчета
+     * TURNOVERn_IN 8 двоичный Оборот по ставке n, продажи
+     * TAXn_IN 8 двоичный налог по ставке n, продажи
+     * ADD_TAXn_IN 8 двоичный сбор по ставке n, продажи
+     * TURNOVERn_OUT 8 двоичный Оборот по ставке n, возвраты
+     * TAXn_OUT 8 двоичный налог по ставке n, возвраты
+     * ADD_TAXn_OUT 8 двоичный сбор по ставке n, возвраты
+     * CHECKS_IN 4 двоичный Количество чеков, продажи
+     * CHECKS_OUT 4 двоичный Количество чеков, возвраты
      */
     public static X1FullResult decodeX1Full(byte[] bFile) {
         X1FullResult result = new X1FullResult();
@@ -431,29 +431,205 @@ public class XRepUtil {
     }
 
 
+
     /**
-     * Экспорт данных, полученных из отчета Х3 в файл Excel
+     * Обработка массива байт из файла x5.bin
+     * <p>
+     * PAY_CASH_INx 8 двоичный Сумма продаж, наличные
+     * PAY_CHECK_INx 8 двоичный Сумма продаж, чек
+     * PAY_CREDIT_CARD_INx 8 двоичный Сумма продаж, кредитная карта
+     * PAY_USERx_INx 8 двоичный Сумма продаж, пользовательский тип х (х = 1,2,3,4,5)
+     * PAY_CASH_OUTx 8 двоичный Сумма возвратов, наличные
+     * PAY_CHECK_OUTx 8 двоичный Сумма возвратов, чек
+     * PAY_CREDIT_CARD_OUTx 8 двоичный Сумма возвратов, кредитная карта
+     * PAY_USERx_OUTx 8 двоичный Сумма возвратов, пользовательский тип х (х = 1,2,3,4,5)
+     * CASH_INx 8 двоичный Служебный внос, наличные
+     * CHECK_INx 8 двоичный Служебный внос, чек
+     * CREDIT_CARD_INx 8 двоичный Служебный внос, кредитная карта
+     * USERx_INx 8 двоичный Служебный внос, пользовательский тип х (х = 1,2,3,4,5)
+     * CASH_OUTx 8 двоичный Служебный вынос, наличные
+     * CHECK_OUTx 8 двоичный Служебный вынос, чек
+     * CREDIT_CARD_OUTx 8 двоичный Служебный вынос, кредитная карта
+     * USERx_OUTx 8 двоичный Служебный вынос, пользовательский тип х (х = 1,2,3,4,5)
+     * ABORT_CHECKS_x 4 двоичный Отмененные чеки
+     * ABORT_POS_x 4 двоичный Отмененные позиции
+     */
+    public static X5Result decodeX5(byte[] bFile) {
+        X5Result result = new X5Result();
+        //Сумма продаж, наличные
+        byte[] temp8 = new byte[8];
+        System.arraycopy(bFile, 0, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayCashIn(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма продаж, чек
+        System.arraycopy(bFile, 8, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayCheckIn(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма продаж, кредитная карта
+        System.arraycopy(bFile, 16, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayCCIn(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма продаж, пользовательский тип 1
+        System.arraycopy(bFile, 24, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayUserIn1(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма продаж, пользовательский тип 2
+        System.arraycopy(bFile, 32, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayUserIn3(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма продаж, пользовательский тип 3
+        System.arraycopy(bFile, 40, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayUserIn3(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма продаж, пользовательский тип 4
+        System.arraycopy(bFile, 48, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayUserIn4(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма продаж, пользовательский тип 5
+        System.arraycopy(bFile, 56, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayUserIn5(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма возвратов, наличные
+        System.arraycopy(bFile, 64, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayCashOut(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма возвратов, чек
+        System.arraycopy(bFile, 72, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayCheckOut(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма возвратов, кредитная карта
+        System.arraycopy(bFile, 80, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayCCOut(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма возвратов, пользовательский тип 1
+        System.arraycopy(bFile, 88, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayUserOut1(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма возвратов, пользовательский тип 2
+        System.arraycopy(bFile, 96, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayUserOut3(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма возвратов, пользовательский тип 3
+        System.arraycopy(bFile, 104, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayUserOut3(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма возвратов, пользовательский тип 4
+        System.arraycopy(bFile, 112, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayUserOut4(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Сумма возвратов, пользовательский тип 5
+        System.arraycopy(bFile, 120, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setPayUserOut5(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный внос, наличные
+        System.arraycopy(bFile, 128, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setCashIn(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный внос, чек
+        System.arraycopy(bFile, 136, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setCheckIn(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный внос, кредитная карта
+        System.arraycopy(bFile, 144, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setCCIn(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный внос, пользовательский тип 1
+        System.arraycopy(bFile, 152, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setUserIn1(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный внос, пользовательский тип 2
+        System.arraycopy(bFile, 160, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setUserIn3(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный внос, пользовательский тип 3
+        System.arraycopy(bFile, 168, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setUserIn3(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный внос, пользовательский тип 4
+        System.arraycopy(bFile, 176, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setUserIn4(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный внос, пользовательский тип 5
+        System.arraycopy(bFile, 184, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setUserIn5(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный вынос, наличные
+        System.arraycopy(bFile, 192, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setCashOut(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный вынос, чек
+        System.arraycopy(bFile, 200, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setCheckOut(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный вынос, кредитная карта
+        System.arraycopy(bFile, 208, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setCCOut(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный вынос, пользовательский тип 1
+        System.arraycopy(bFile, 216, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setUserOut1(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный вынос, пользовательский тип 2
+        System.arraycopy(bFile, 224, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setUserOut3(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный вынос, пользовательский тип 3
+        System.arraycopy(bFile, 232, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setUserOut3(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный вынос, пользовательский тип 4
+        System.arraycopy(bFile, 240, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setUserOut4(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+
+        //Служебный вынос, пользовательский тип 5
+        System.arraycopy(bFile, 248, temp8, 0, 8);     //делим на 100 ибо в копейках
+        result.setUserOut5(BigDecimal.valueOf(ByteBuffer.wrap(temp8).order(ByteOrder.LITTLE_ENDIAN).getInt()).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_EVEN)); //getting wrapped BigDecimal from 8 byte in reverse byte order
+        
+        //Отмененные чеки
+        byte[] temp4 = new byte[4];
+        System.arraycopy(bFile, 256, temp4, 0, 4);
+        result.setAbortChecks(ByteBuffer.wrap(temp4).order(ByteOrder.LITTLE_ENDIAN).getInt()); //getting wrapped int from 4 byte in reverse byte order
+
+        //Отмененные позиции
+        System.arraycopy(bFile, 264, temp4, 0, 4);
+        result.setAbortPos(ByteBuffer.wrap(temp4).order(ByteOrder.LITTLE_ENDIAN).getInt()); //getting wrapped int from 4 byte in reverse byte order
+
+        return result;
+    }
+
+
+
+
+
+    /**
+     * Экспорт данных, полученных из Х-отчетов в файл Excel
      *
      * @param x1FullResult      объект с данными из декодированного файла x1.bin
+     * @param x5Result          объект с данными из декодированного файла x5.bin
      * @param x3ResultArrayList массив объектов с данными из декодированного файла x3.bin
-     * @param excelFilePath     путь и имя книги xlsx
+     * @param folderPath        имя папки для книги xlsx
+     * @param excelFileName     имя книги xlsx
      * @param X1sheetName       имя листа для полного дневного отчета
+     * @param X5sheetName       имя листа для отчета по кассирам
      * @param X3sheetName       имя листа для отчета по товарам в книге
      * @return successfulness of operation
      */
-    public static boolean writeToXlsx(X1FullResult x1FullResult, ArrayList<X3Result> x3ResultArrayList, String excelFilePath, String X1sheetName, String X3sheetName) {
+    public static boolean writeToXlsx(X1FullResult x1FullResult, X5Result x5Result, ArrayList<X3Result> x3ResultArrayList, String folderPath, String excelFileName, String X1sheetName, String X5sheetName, String X3sheetName) {
 
         try {
             //создание файла
-            if (!Files.exists(Paths.get(excelFilePath))) {
-                Files.createFile(Paths.get(excelFilePath));
+            if (!Files.exists(Paths.get(excelFileName))) {
+                if (!Files.isDirectory(Paths.get(folderPath))) {
+                    Files.createDirectory(Paths.get(folderPath));
+                }
+                Files.createFile(Paths.get(folderPath + "\\" + excelFileName));
             }
-            if ((Files.isDirectory(Paths.get(excelFilePath))) | (!Files.isWritable(Paths.get(excelFilePath)))) {
-                log.debug("Error accessing file for writing X3 report. File '" + excelFilePath + "' is directory or is not writable");
+            if ((!Files.isWritable(Paths.get(folderPath + "\\" +excelFileName))) || (Files.isDirectory(Paths.get(folderPath + "\\" +excelFileName)))) {
+                log.debug("Error accessing file for writing X3 report. File '" + excelFileName + "' is directory or is not writable");
                 return false;
             }
             Workbook workbook = null;
-            String fileExtension = excelFilePath.substring(excelFilePath.indexOf("."));
+            String fileExtension = excelFileName.substring(excelFileName.indexOf("."));
             if (fileExtension.equals(".xls")) {
                 workbook = new HSSFWorkbook();
 
@@ -465,13 +641,6 @@ public class XRepUtil {
                 return false;
             }
 
-
-            //заполнение листа с отчетом о товарах (Х3)
-            Sheet sheet = workbook.createSheet(X3sheetName); //если лист не существует - создать его
-            ListIterator<X3Result> x3ResultListIterator = x3ResultArrayList.listIterator();
-
-            Row row;
-            row = sheet.createRow(1);    //создаем строку с названиями "продажа" и "возврат"
             Font font = workbook.createFont();
             //font.setFontHeightInPoints((short) 12);
             //font.setFontName("Calibri");
@@ -480,22 +649,425 @@ public class XRepUtil {
             CellStyle styleBoldHCenter = workbook.createCellStyle();
             styleBoldHCenter.setFont(font);
             styleBoldHCenter.setAlignment(CellStyle.ALIGN_CENTER);
+
+            //заполнение листа с полным дневным отчетом (Х1)
+            Sheet sheetX1 = workbook.createSheet(X1sheetName); //если лист не существует - создать его
+
+            // Строка заголовков
+            Row rowX1_1 = sheetX1.createRow(1);
+            Cell cellX1a = rowX1_1.createCell(1, Cell.CELL_TYPE_STRING);
+            cellX1a.setCellValue("Название параметра");
+            cellX1a.setCellStyle(styleBoldHCenter);
+            Cell cellX1b = rowX1_1.createCell(2, Cell.CELL_TYPE_STRING);
+            cellX1b.setCellValue("Значение");
+            cellX1b.setCellStyle(styleBoldHCenter);
+
+            Row rowX1_2 = sheetX1.createRow(2);
+            rowX1_2.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Номер записи о налогах");
+            rowX1_2.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxNum());
+
+            Row rowX1_3 = sheetX1.createRow(3);
+            rowX1_3.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Дата записи ставок НДС");
+            rowX1_3.createCell(2, Cell.CELL_TYPE_STRING).setCellValue(x1FullResult.getData());
+
+            Row rowX1_4 = sheetX1.createRow(4);
+            rowX1_4.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Параметры НДС");
+            rowX1_4.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxParam());
+
+            Row rowX1_5 = sheetX1.createRow(5);
+            rowX1_5.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Значение 1-й ставки НДС (А)");
+            rowX1_5.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxVal1().doubleValue());
+
+            Row rowX1_6 = sheetX1.createRow(6);
+            rowX1_6.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Значение 1-й ставки дополнительного сбора");
+            rowX1_6.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxVal1().doubleValue());
+
+            Row rowX1_7 = sheetX1.createRow(7);
+            rowX1_7.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Название 1-го дополнительного сбора");
+            rowX1_7.createCell(2, Cell.CELL_TYPE_STRING).setCellValue(x1FullResult.getAddTaxValName1());
+
+            Row rowX1_8 = sheetX1.createRow(8);
+            rowX1_8.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Значение 2-й ставки НДС (Б)");
+            rowX1_8.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxVal2().doubleValue());
+
+            Row rowX1_9 = sheetX1.createRow(9);
+            rowX1_9.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Значение 2-й ставки дополнительного сбора");
+            rowX1_9.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxVal2().doubleValue());
+
+            Row rowX1_10 = sheetX1.createRow(10);
+            rowX1_10.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Название 2-го дополнительного сбора");
+            rowX1_10.createCell(2, Cell.CELL_TYPE_STRING).setCellValue(x1FullResult.getAddTaxValName2());
+
+            Row rowX1_11 = sheetX1.createRow(11);
+            rowX1_11.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Значение 3-й ставки НДС (В)");
+            rowX1_11.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxVal3().doubleValue());
+
+            Row rowX1_12 = sheetX1.createRow(12);
+            rowX1_12.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Значение 3-й ставки дополнительного сбора");
+            rowX1_12.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxVal3().doubleValue());
+
+            Row rowX1_13 = sheetX1.createRow(13);
+            rowX1_13.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Название 3-го дополнительного сбора");
+            rowX1_13.createCell(2, Cell.CELL_TYPE_STRING).setCellValue(x1FullResult.getAddTaxValName3());
+
+            Row rowX1_14 = sheetX1.createRow(14);
+            rowX1_14.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Значение 4-й ставки НДС (Г)");
+            rowX1_14.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxVal4().doubleValue());
+
+            Row rowX1_15 = sheetX1.createRow(15);
+            rowX1_15.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Значение 4-й ставки дополнительного сбора");
+            rowX1_15.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxVal4().doubleValue());
+
+            Row rowX1_16 = sheetX1.createRow(16);
+            rowX1_16.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Название 4-го дополнительного сбора");
+            rowX1_16.createCell(2, Cell.CELL_TYPE_STRING).setCellValue(x1FullResult.getAddTaxValName4());
+
+            Row rowX1_17 = sheetX1.createRow(17);
+            rowX1_17.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Значение 5-й ставки НДС (Д)");
+            rowX1_17.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxVal5().doubleValue());
+
+            Row rowX1_18 = sheetX1.createRow(18);
+            rowX1_18.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Значение 5-й ставки дополнительного сбора");
+            rowX1_18.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxVal5().doubleValue());
+
+            Row rowX1_19 = sheetX1.createRow(19);
+            rowX1_19.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Название 5-го дополнительного сбора");
+            rowX1_19.createCell(2, Cell.CELL_TYPE_STRING).setCellValue(x1FullResult.getAddTaxValName5());
+
+            Row rowX1_20 = sheetX1.createRow(20);
+            rowX1_20.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Номер текущего Z отчета");
+            rowX1_20.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getZ1Num());
+
+            Row rowX1_21 = sheetX1.createRow(21);
+            rowX1_21.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Оборот, продажа, ставка №1");
+            rowX1_21.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTurnoverIn1().doubleValue());
+
+            Row rowX1_22 = sheetX1.createRow(22);
+            rowX1_22.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Оборот, продажа, ставка №2");
+            rowX1_22.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTurnoverIn2().doubleValue());
+
+            Row rowX1_23 = sheetX1.createRow(23);
+            rowX1_23.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Оборот, продажа, ставка №3");
+            rowX1_23.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTurnoverIn3().doubleValue());
+
+            Row rowX1_24 = sheetX1.createRow(24);
+            rowX1_24.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Оборот, продажа, ставка №4");
+            rowX1_24.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTurnoverIn4().doubleValue());
+
+            Row rowX1_25 = sheetX1.createRow(25);
+            rowX1_25.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Оборот, продажа, ставка №5");
+            rowX1_25.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTurnoverIn5().doubleValue());
+
+            Row rowX1_26 = sheetX1.createRow(26);
+            rowX1_26.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Оборот, продажа, ставка №6");
+            rowX1_26.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTurnoverIn6().doubleValue());
+
+            Row rowX1_27 = sheetX1.createRow(27);
+            rowX1_27.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Налог, продажа, ставка №1");
+            rowX1_27.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxIn1().doubleValue());
+
+            Row rowX1_28 = sheetX1.createRow(28);
+            rowX1_28.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Налог, продажа, ставка №2");
+            rowX1_28.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxIn2().doubleValue());
+
+            Row rowX1_29 = sheetX1.createRow(29);
+            rowX1_29.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Налог, продажа, ставка №3");
+            rowX1_29.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxIn3().doubleValue());
+
+            Row rowX1_30 = sheetX1.createRow(30);
+            rowX1_30.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Налог, продажа, ставка №4");
+            rowX1_30.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxIn4().doubleValue());
+
+            Row rowX1_31 = sheetX1.createRow(31);
+            rowX1_31.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Налог, продажа, ставка №5");
+            rowX1_31.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxIn5().doubleValue());
+
+            Row rowX1_32 = sheetX1.createRow(32);
+            rowX1_32.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Налог, продажа, ставка №6");
+            rowX1_32.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxIn6().doubleValue());
+
+            Row rowX1_33 = sheetX1.createRow(33);
+            rowX1_33.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сбор, продажа, ставка №1");
+            rowX1_33.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxIn1().doubleValue());
+
+            Row rowX1_34 = sheetX1.createRow(34);
+            rowX1_34.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сбор, продажа, ставка №2");
+            rowX1_34.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxIn2().doubleValue());
+
+            Row rowX1_35 = sheetX1.createRow(35);
+            rowX1_35.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сбор, продажа, ставка №3");
+            rowX1_35.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxIn3().doubleValue());
+
+            Row rowX1_36 = sheetX1.createRow(36);
+            rowX1_36.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сбор, продажа, ставка №4");
+            rowX1_36.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxIn4().doubleValue());
+
+            Row rowX1_37 = sheetX1.createRow(37);
+            rowX1_37.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сбор, продажа, ставка №5");
+            rowX1_37.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxIn5().doubleValue());
+
+            Row rowX1_38 = sheetX1.createRow(38);
+            rowX1_38.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сбор, продажа, ставка №6");
+            rowX1_38.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxIn6().doubleValue());
+
+            Row rowX1_39 = sheetX1.createRow(39);
+            rowX1_39.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Оборот, возврат, ставка №1");
+            rowX1_39.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTurnoverOut1().doubleValue());
+
+            Row rowX1_40 = sheetX1.createRow(40);
+            rowX1_40.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Оборот, возврат, ставка №2");
+            rowX1_40.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTurnoverOut2().doubleValue());
+
+            Row rowX1_41 = sheetX1.createRow(41);
+            rowX1_41.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Оборот, возврат, ставка №3");
+            rowX1_41.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTurnoverOut3().doubleValue());
+
+            Row rowX1_42 = sheetX1.createRow(42);
+            rowX1_42.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Оборот, возврат, ставка №4");
+            rowX1_42.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTurnoverOut4().doubleValue());
+
+            Row rowX1_43 = sheetX1.createRow(43);
+            rowX1_43.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Оборот, возврат, ставка №5");
+            rowX1_43.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTurnoverOut5().doubleValue());
+
+            Row rowX1_44 = sheetX1.createRow(44);
+            rowX1_44.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Оборот, возврат, ставка №6");
+            rowX1_44.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTurnoverOut6().doubleValue());
+
+            Row rowX1_45 = sheetX1.createRow(45);
+            rowX1_45.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Налог, возврат, ставка №1");
+            rowX1_45.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxOut1().doubleValue());
+
+            Row rowX1_46 = sheetX1.createRow(46);
+            rowX1_46.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Налог, возврат, ставка №2");
+            rowX1_46.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxOut2().doubleValue());
+
+            Row rowX1_47 = sheetX1.createRow(47);
+            rowX1_47.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Налог, возврат, ставка №3");
+            rowX1_47.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxOut3().doubleValue());
+
+            Row rowX1_48 = sheetX1.createRow(48);
+            rowX1_48.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Налог, возврат, ставка №4");
+            rowX1_48.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxOut4().doubleValue());
+
+            Row rowX1_49 = sheetX1.createRow(49);
+            rowX1_49.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Налог, возврат, ставка №5");
+            rowX1_49.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxOut5().doubleValue());
+
+            Row rowX1_50 = sheetX1.createRow(50);
+            rowX1_50.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Налог, возврат, ставка №6");
+            rowX1_50.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getTaxOut6().doubleValue());
+
+            Row rowX1_51 = sheetX1.createRow(51);
+            rowX1_51.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сбор, возврат, ставка №1");
+            rowX1_51.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxOut1().doubleValue());
+
+            Row rowX1_52 = sheetX1.createRow(52);
+            rowX1_52.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сбор, возврат, ставка №2");
+            rowX1_52.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxOut2().doubleValue());
+
+            Row rowX1_53 = sheetX1.createRow(53);
+            rowX1_53.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сбор, возврат, ставка №3");
+            rowX1_53.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxOut3().doubleValue());
+
+            Row rowX1_54 = sheetX1.createRow(54);
+            rowX1_54.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сбор, возврат, ставка №4");
+            rowX1_54.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxOut4().doubleValue());
+
+            Row rowX1_55 = sheetX1.createRow(55);
+            rowX1_55.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сбор, возврат, ставка №5");
+            rowX1_55.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxOut5().doubleValue());
+
+            Row rowX1_56 = sheetX1.createRow(56);
+            rowX1_56.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сбор, возврат, ставка №6");
+            rowX1_56.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getAddTaxOut6().doubleValue());
+
+            Row rowX1_57 = sheetX1.createRow(57);
+            rowX1_57.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Количество чеков, продажа");
+            rowX1_57.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getChecksIn());
+
+            Row rowX1_58 = sheetX1.createRow(58);
+            rowX1_58.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Количество чеков, возврат");
+            rowX1_58.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x1FullResult.getChecksOut());
+
+            sheetX1.autoSizeColumn(1);
+            sheetX1.autoSizeColumn(2);
+
+
+            //заполнение листа с отчетом кассиров (Х5)
+            Sheet sheetX5 = workbook.createSheet(X5sheetName); //если лист не существует - создать его
+
+            // Строка заголовков
+            Row rowX5_1 = sheetX5.createRow(1);
+            Cell cellX5a = rowX5_1.createCell(1, Cell.CELL_TYPE_STRING);
+            cellX5a.setCellValue("Название параметра");
+            cellX5a.setCellStyle(styleBoldHCenter);
+            Cell cellX5b = rowX5_1.createCell(2, Cell.CELL_TYPE_STRING);
+            cellX5b.setCellValue("Значение");
+            cellX5b.setCellStyle(styleBoldHCenter);
+
+            Row rowX5_2 = sheetX5.createRow(2);
+            rowX5_2.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма продаж, наличные");
+            rowX5_2.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayCashIn().doubleValue());
+
+            Row rowX5_3 = sheetX5.createRow(3);
+            rowX5_3.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма продаж, чек");
+            rowX5_3.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayCheckIn().doubleValue());
+
+            Row rowX5_4 = sheetX5.createRow(4);
+            rowX5_4.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма продаж, кредитная карта");
+            rowX5_4.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayCCIn().doubleValue());
+
+            Row rowX5_5 = sheetX5.createRow(5);
+            rowX5_5.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма продаж, пользовательский тип 1");
+            rowX5_5.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayUserIn1().doubleValue());
+
+            Row rowX5_6 = sheetX5.createRow(6);
+            rowX5_6.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма продаж, пользовательский тип 2");
+            rowX5_6.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayUserIn1().doubleValue());
+
+            Row rowX5_7 = sheetX5.createRow(7);
+            rowX5_7.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма продаж, пользовательский тип 3");
+            rowX5_7.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayUserIn1().doubleValue());
+
+            Row rowX5_8 = sheetX5.createRow(8);
+            rowX5_8.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма продаж, пользовательский тип 4");
+            rowX5_8.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayUserIn1().doubleValue());
+
+            Row rowX5_9 = sheetX5.createRow(9);
+            rowX5_9.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма продаж, пользовательский тип 5");
+            rowX5_9.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayUserIn1().doubleValue());
+
+            Row rowX5_10 = sheetX5.createRow(10);
+            rowX5_10.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма возвратов, наличные");
+            rowX5_10.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayCashOut().doubleValue());
+
+            Row rowX5_11 = sheetX5.createRow(11);
+            rowX5_11.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма возвратов, чек");
+            rowX5_11.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayCheckOut().doubleValue());
+
+            Row rowX5_12 = sheetX5.createRow(12);
+            rowX5_12.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма возвратов, кредитная карта");
+            rowX5_12.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayCCOut().doubleValue());
+
+            Row rowX5_13 = sheetX5.createRow(13);
+            rowX5_13.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма возвратов, пользовательский тип 1");
+            rowX5_13.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayUserOut1().doubleValue());
+
+            Row rowX5_14 = sheetX5.createRow(14);
+            rowX5_14.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма возвратов, пользовательский тип 2");
+            rowX5_14.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayUserOut1().doubleValue());
+
+            Row rowX5_15 = sheetX5.createRow(15);
+            rowX5_15.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма возвратов, пользовательский тип 3");
+            rowX5_15.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayUserOut1().doubleValue());
+
+            Row rowX5_16 = sheetX5.createRow(16);
+            rowX5_16.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма возвратов, пользовательский тип 4");
+            rowX5_16.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayUserOut1().doubleValue());
+
+            Row rowX5_17 = sheetX5.createRow(17);
+            rowX5_17.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Сумма возвратов, пользовательский тип 5");
+            rowX5_17.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getPayUserOut1().doubleValue());
+
+            Row rowX5_18 = sheetX5.createRow(18);
+            rowX5_18.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебный внос, наличные");
+            rowX5_18.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getCashIn().doubleValue());
+
+            Row rowX5_19 = sheetX5.createRow(19);
+            rowX5_19.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебный внос, чек");
+            rowX5_19.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getCheckIn().doubleValue());
+
+            Row rowX5_20 = sheetX5.createRow(20);
+            rowX5_20.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебный внос, кредитная карта");
+            rowX5_20.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getCCIn().doubleValue());
+
+            Row rowX5_21 = sheetX5.createRow(21);
+            rowX5_21.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебный внос, пользовательский тип 1");
+            rowX5_21.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getUserIn1().doubleValue());
+
+            Row rowX5_22 = sheetX5.createRow(22);
+            rowX5_22.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебный внос, пользовательский тип 2");
+            rowX5_22.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getUserIn1().doubleValue());
+
+            Row rowX5_23 = sheetX5.createRow(23);
+            rowX5_23.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебный внос, пользовательский тип 3");
+            rowX5_23.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getUserIn1().doubleValue());
+
+            Row rowX5_24 = sheetX5.createRow(24);
+            rowX5_24.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебный внос, пользовательский тип 4");
+            rowX5_24.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getUserIn1().doubleValue());
+
+            Row rowX5_25 = sheetX5.createRow(25);
+            rowX5_25.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебный внос, пользовательский тип 5");
+            rowX5_25.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getUserIn1().doubleValue());
+
+            Row rowX5_26 = sheetX5.createRow(26);
+            rowX5_26.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебная выдача, наличные");
+            rowX5_26.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getCashOut().doubleValue());
+
+            Row rowX5_27 = sheetX5.createRow(27);
+            rowX5_27.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебная выдача, чек");
+            rowX5_27.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getCheckOut().doubleValue());
+
+            Row rowX5_28 = sheetX5.createRow(28);
+            rowX5_28.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебная выдача, кредитная карта");
+            rowX5_28.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getCCOut().doubleValue());
+
+            Row rowX5_29 = sheetX5.createRow(29);
+            rowX5_29.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебная выдача, пользовательский тип 1");
+            rowX5_29.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getUserOut1().doubleValue());
+
+            Row rowX5_30 = sheetX5.createRow(30);
+            rowX5_30.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебная выдача, пользовательский тип 2");
+            rowX5_30.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getUserOut1().doubleValue());
+
+            Row rowX5_31 = sheetX5.createRow(31);
+            rowX5_31.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебная выдача, пользовательский тип 3");
+            rowX5_31.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getUserOut1().doubleValue());
+
+            Row rowX5_32 = sheetX5.createRow(32);
+            rowX5_32.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебная выдача, пользовательский тип 4");
+            rowX5_32.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getUserOut1().doubleValue());
+
+            Row rowX5_33 = sheetX5.createRow(33);
+            rowX5_33.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Служебная выдача, пользовательский тип 5");
+            rowX5_33.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getUserOut1().doubleValue());
+
+            Row rowX5_34 = sheetX5.createRow(34);
+            rowX5_34.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Аннулированые чеки");
+            rowX5_34.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getAbortChecks());
+
+            Row rowX5_35 = sheetX1.createRow(35);
+            rowX5_35.createCell(1, Cell.CELL_TYPE_STRING).setCellValue("Аннулированные позиции");
+            rowX5_35.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(x5Result.getAbortPos());
+
+            sheetX5.autoSizeColumn(1);
+            sheetX5.autoSizeColumn(2);
+            
+
+            //заполнение листа с отчетом о товарах (Х3)
+            Sheet sheetX3 = workbook.createSheet(X3sheetName); //если лист не существует - создать его
+            ListIterator<X3Result> x3ResultListIterator = x3ResultArrayList.listIterator();
+
+            Row rowX3;
+            rowX3 = sheetX3.createRow(1);    //создаем строку с названиями "продажа" и "возврат"
             // Create a cell with a value and set style to it.
-            Cell cell4 = row.createCell(4, Cell.CELL_TYPE_STRING);
+            Cell cell4 = rowX3.createCell(4, Cell.CELL_TYPE_STRING);
             cell4.setCellValue("Продажа");
-            Cell cell8 = row.createCell(8, Cell.CELL_TYPE_STRING);
+            Cell cell8 = rowX3.createCell(8, Cell.CELL_TYPE_STRING);
             cell8.setCellValue("Возврат");
-            sheet.addMergedRegion(new CellRangeAddress(1, 1, 4, 7));
-            sheet.addMergedRegion(new CellRangeAddress(1, 1, 8, 11));
+            sheetX3.addMergedRegion(new CellRangeAddress(1, 1, 4, 7));
+            sheetX3.addMergedRegion(new CellRangeAddress(1, 1, 8, 11));
             cell4.setCellStyle(styleBoldHCenter);
             cell8.setCellStyle(styleBoldHCenter);
             //style.setAlignment(CellStyle.ALIGN_GENERAL);
 
-            row = sheet.createRow(2);    //создаем строку с названиями стоблцов
-            String[] heading = {"Код", "Наименование товара", "Цена", "Количество", "Наценка", "Скидка", "Оборот", "Количество", "Наценка", "Скидка", "Оборот", "Штрихкод", "Остатки"};
+            rowX3 = sheetX3.createRow(2);    //создаем строку с названиями стоблцов
+            String[] headingX3 = {"Код", "Наименование товара", "Цена", "Количество", "Наценка", "Скидка", "Оборот", "Количество", "Наценка", "Скидка", "Оборот", "Штрихкод", "Остатки"};
             int s = 1;
-            for (String str : heading) {
-                Cell cell = row.createCell(s, Cell.CELL_TYPE_STRING);
+            for (String str : headingX3) {
+                Cell cell = rowX3.createCell(s, Cell.CELL_TYPE_STRING);
                 cell.setCellValue(str);
                 cell.setCellStyle(styleBoldHCenter);
                 s++;
@@ -505,45 +1077,45 @@ public class XRepUtil {
             //int colIndex = 0;   //и 1-го!!! столбца
 
             while (x3ResultListIterator.hasNext()) {
-                row = sheet.createRow(rowIndex);    //создаем строку и набрасываем в нее ячейки с данными
-                row.createCell(1, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getCode());
-                row.createCell(2, Cell.CELL_TYPE_STRING).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getName());
-                row.createCell(3, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getPrice().doubleValue());
-                row.createCell(4, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getQtyIn().doubleValue());
-                row.createCell(5, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getMRKPIn().doubleValue());
-                row.createCell(6, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getRDCTIn().doubleValue());
-                row.createCell(7, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getTRNOVRIn().doubleValue());
-                row.createCell(8, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getQtyOut().doubleValue());
-                row.createCell(9, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getMRKPOut().doubleValue());
-                row.createCell(10, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getRDCTOut().doubleValue());
-                row.createCell(11, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getTRNOVROut().doubleValue());
-                row.createCell(12, Cell.CELL_TYPE_STRING).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getBarcode());
-                row.createCell(13, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getQty().doubleValue());
+                rowX3 = sheetX3.createRow(rowIndex);    //создаем строку и набрасываем в нее ячейки с данными
+                rowX3.createCell(1, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getCode());
+                rowX3.createCell(2, Cell.CELL_TYPE_STRING).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getName());
+                rowX3.createCell(3, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getPrice().doubleValue());
+                rowX3.createCell(4, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getQtyIn().doubleValue());
+                rowX3.createCell(5, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getMRKPIn().doubleValue());
+                rowX3.createCell(6, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getRDCTIn().doubleValue());
+                rowX3.createCell(7, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getTRNOVRIn().doubleValue());
+                rowX3.createCell(8, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getQtyOut().doubleValue());
+                rowX3.createCell(9, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getMRKPOut().doubleValue());
+                rowX3.createCell(10, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getRDCTOut().doubleValue());
+                rowX3.createCell(11, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getTRNOVROut().doubleValue());
+                rowX3.createCell(12, Cell.CELL_TYPE_STRING).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getBarcode());
+                rowX3.createCell(13, Cell.CELL_TYPE_NUMERIC).setCellValue(x3ResultArrayList.get(x3ResultListIterator.nextIndex()).getQty().doubleValue());
                 x3ResultListIterator.next();
                 rowIndex++;
             }
-            sheet.autoSizeColumn(1);
-            sheet.autoSizeColumn(2);
-            sheet.autoSizeColumn(3);
-            sheet.autoSizeColumn(4);
-            sheet.autoSizeColumn(5);
-            sheet.autoSizeColumn(6);
-            sheet.autoSizeColumn(7);
-            sheet.autoSizeColumn(8);
-            sheet.autoSizeColumn(9);
-            sheet.autoSizeColumn(10);
-            sheet.autoSizeColumn(11);
-            sheet.autoSizeColumn(12);
-            sheet.autoSizeColumn(13);
+            sheetX3.autoSizeColumn(1);
+            sheetX3.autoSizeColumn(2);
+            sheetX3.autoSizeColumn(3);
+            sheetX3.autoSizeColumn(4);
+            sheetX3.autoSizeColumn(5);
+            sheetX3.autoSizeColumn(6);
+            sheetX3.autoSizeColumn(7);
+            sheetX3.autoSizeColumn(8);
+            sheetX3.autoSizeColumn(9);
+            sheetX3.autoSizeColumn(10);
+            sheetX3.autoSizeColumn(11);
+            sheetX3.autoSizeColumn(12);
+            sheetX3.autoSizeColumn(13);
 
-
-            OutputStream outFile = Files.newOutputStream(Paths.get(excelFilePath));
+            OutputStream outFile = Files.newOutputStream(Paths.get(folderPath + "\\" +excelFileName));
             //FileOutputStream outFile = new FileOutputStream(new File(excelFilePath));
+            log.debug("writing X reports file");
             workbook.write(outFile);
             outFile.close();
             return true;
         } catch (IOException e) {
-            log.debug("error while writing X3 report: " + e.toString());
+            log.debug("error while writing X reports file: " + e.toString());
             return false;
         }
 
