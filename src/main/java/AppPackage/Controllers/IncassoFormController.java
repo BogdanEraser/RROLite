@@ -88,6 +88,10 @@ public class IncassoFormController //implements Initializable
         this.showCharge.set(showCharge);
     }
 
+    public void setTxtValue(String value) {
+        this.txtValue.setText(value);
+    }
+
     @FXML
     public void initialize() {
         //textField.getProperties().put("vkType", "numeric");

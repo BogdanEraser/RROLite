@@ -383,49 +383,5 @@ public class LoginFormController //implements Initializable
             alert.showAndWait();
         }
     }
-/*
-    public void setAddbutton(Event event) {
-        String logintextboxText = logintextbox.getText();
-        StringBuilder stringBuilder = new StringBuilder();
-        textField.getProperties().put("vkType", "numeric");
 
-        if (!StringUtils.isEmpty(logintextboxText)) {
-            stringBuilder.append(logintextboxText);
-        }
-
-        if (stringBuilder.length() > 0) {
-            log.debug("Создаю кнопку " + stringBuilder.toString());
-            Button btn = new Button();
-            btn.setText(stringBuilder.toString());
-            btn.setId(btn.hashCode() + stringBuilder.toString());
-            if (btnArrayList.size() < 3) {
-                btn.setOnAction(innerEvent -> log.debug("нажали кнопку " + stringBuilder.toString()));
-            } else {
-                btn.setText("Кнопка очищения");
-                btn.setOnAction(innerEvent -> {
-                    log.debug("очищаем кнопки ");
-                    int chldQty = loginForm.getChildren().size();
-                    for (String aBtnArrayList : btnArrayList) {
-                        for (int j = 0; j <= chldQty; j++) {
-                            if (aBtnArrayList.equals(loginForm.getChildren().get(j).getId())) {
-                                loginForm.getChildren().remove(j);
-                                break;
-                            }
-                        }
-                    }
-                    btnArrayList.clear();
-                });
-            }
-            btn.setLayoutX(20);
-            btn.setLayoutY(20 + i);
-            loginForm.getChildren().add(btn);
-            btnArrayList.add(btn.getId());
-            i = i + 30;
-            messagelabel.setText("Создаю кнопку " + stringBuilder.toString());
-        } else {
-            log.debug("пусто название для кнопки недопустимо");
-            messagelabel.setText("пусто название для кнопки недопустимо");
-        }
-    }
-*/
 }

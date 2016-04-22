@@ -27,6 +27,7 @@ import org.apache.poi.ss.usermodel.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -34,6 +35,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -45,6 +47,8 @@ public class MainFormController //implements Initializable
     private Scene scene;
     private Stage stage;
     private Parent root;
+    private BigDecimal cashToBeInputed;
+
     private static MainApp mainApp;
     @FXML
     private static BorderPane mainForm;
@@ -76,6 +80,8 @@ public class MainFormController //implements Initializable
     private Button btnZReport;
     @FXML
     private Button btnEmptyReceipt;
+
+
 
     private ResourceBundle bundle;
 
@@ -740,6 +746,38 @@ public class MainFormController //implements Initializable
                 }
                 log.debug("thread 'add_plu' finished");
             }
+
+            //а так же, проверим если файл с суммами существует, то предложим внести необходимую сумму в РРО
+            cashToBeInputed = new BigDecimal(0);
+            try {
+                String cashFileName = "rrocash.lck";
+                log.debug("getting current summ (cash & cc) from rrocash.lck");
+                if (Files.exists(Paths.get(cashFileName)) & Files.isReadable(Paths.get(cashFileName))){
+                    List<String> lines = Files.readAllLines(Paths.get(cashFileName), Charset.defaultCharset());
+                    if (lines.size()>0) {
+                        cashToBeInputed = new BigDecimal(lines.get(0));
+                    }
+                }
+
+                if (cashToBeInputed.compareTo(BigDecimal.ZERO)==1) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Сообщение");
+                    alert.setHeaderText("Необходимо произвести служебный внос в размере " + cashToBeInputed.toString());
+                    alert.setContentText("После нажатия [ОК] будет открыта форма для служебного вноса с необходимой суммой");
+                    alert.showAndWait();
+                    //если сумма для внесения больше 0, то покажем форму для внесения
+                    setCashInOutButton(cashToBeInputed);
+
+                }
+            } catch (IOException e) {
+                log.debug("error getting cash and cc from rrocash.lck " + e.toString());
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Ошибка");
+                alert.setHeaderText("Не удалось считать сумму для служебного вноса");
+                alert.setContentText("Возможно программа была аварийно закрыта или сумма записана вручную");
+                alert.showAndWait();
+            }
+
         }
 
         //сохраняем в файл выбранные товари и группы (сериализация)
@@ -901,7 +939,7 @@ public class MainFormController //implements Initializable
                                 alert.setTitle("Информация");
                                 alert.setHeaderText("Распечатка общего дневного Х-отчета на РРО");
                                 alert.showAndWait();
-/*                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).execXReport()) {
+                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).execXReport()) {
                                     //ошибка при попытке распечатки Х-отчета
                                     log.debug("error while getting X-report");
                                     Alert alertError = new Alert(Alert.AlertType.WARNING);
@@ -910,159 +948,65 @@ public class MainFormController //implements Initializable
                                     alertError.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
                                     alertError.showAndWait();
                                 }
-*/
+
                                 //сохранение Х-отчетов по товарам в файл
 
                                 String folderName = MainApp.getPathToExchageFolder() + "\\" + MainApp.getSellingPointName() + "\\";
                                 String excelFileName = MainApp.getSellingPointName() + " " + localDateTime.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)).replace(".", "_").replace(":", "_") + ".xlsx";
                                 alert = new Alert(Alert.AlertType.INFORMATION);
+                                alert.setTitle("Сообщение");
+                                alert.setHeaderText("Сохранение Х-отчетов в файл " + folderName + excelFileName + "\nПосле завершения нажмите [ОК]");
+                                // alert.showAndWait();
+
+
+                                Task task = saveXreports(folderName, excelFileName);
+                                Thread saveXreportThread = null;
+                                saveXreportThread = new Thread(task);
+                                progressIndicator.progressProperty().bind(task.progressProperty());
+                                lblProgress.setText("Сохранение Х-отчетов в файл");
+                                progressIndicator.setVisible(true);
+                                lblProgress.setVisible(true);
+
+                                log.debug("thread 'saveXreportThread' started");
+                                saveXreportThread.setDaemon(true);
+                                saveXreportThread.start();
+
+
+                                while (saveXreportThread.isAlive()) {
+                                    alert.showAndWait();
+                                    Thread.yield();
+                                }
+                                log.debug("thread 'saveXreportThread' finished");
+
+
+                                //сохранение сумм из РРО в файл
+                                BigDecimal cash = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCashInRRO();
+                                BigDecimal cc = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCreditInRRO();
+                                if (!saveCashFromRROToFile(cash, cc)) {
+                                    //сохранение сумм прошло неуспешно
+                                    alert = new Alert(Alert.AlertType.ERROR);
+                                    alert.setTitle("Ошибка");
+                                    alert.setHeaderText("Ошибка сохранения суммы из РРО в файл\nРекомендуется записать вручную для последующего вноса в РРО");
+                                    alert.setContentText("Сумма наличными: "+cash.toString());
+                                    alert.showAndWait();
+                                }
+
+
+
+                                //печать Z-отчета и закрытие программы
+                                alert = new Alert(Alert.AlertType.INFORMATION);
                                 alert.setTitle("Информация");
-                                alert.setHeaderText("Получение Х-отчетов в файл " + folderName + excelFileName);
+                                alert.setHeaderText("После нажатия кнопки [ОК] будет сделан Z-отчет на РРО и выход из программы\nПосле окончания принтер будет перезагружен");
                                 alert.showAndWait();
-
-                                X1FullResult x1Res = new X1FullResult();
-                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getXReport(0, 1, 1)) {
-                                    //ошибка при попытке получения файла Х1-отчета
-                                    log.debug("error while getting X1-report from RRO");
+                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).execZReport()) {
+                                    //ошибка при попытке распечатки Z-отчета
+                                    log.debug("error while getting Z-report");
                                     Alert alertError = new Alert(Alert.AlertType.WARNING);
                                     alertError.setTitle("Ошибка");
-                                    alertError.setHeaderText("Ошибка при получении полного дневного отчета (Х1-отчета) из РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                                    alertError.setHeaderText("Ошибка при печати общего дневного Z-отчета\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
                                     alertError.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
                                     alertError.showAndWait();
-                                } else {
-                                    //==== разбираем файл отчетов x1.bin
-                                    log.debug("decoding x1.bin");
-
-                                    String x1filename = "x1.bin";
-                                    if ((Files.exists(Paths.get(x1filename))) & (!Files.isDirectory(Paths.get(x1filename))) & (Files.isReadable(Paths.get(x1filename)))) {
-                                        int filesize = 0;
-                                        byte[] bFile = new byte[1];
-                                        try {
-                                            filesize = (int) Files.size(Paths.get(x1filename));
-                                            bFile = new byte[filesize];
-                                            bFile = Files.readAllBytes(Paths.get(x1filename));   //читаем все байты в массив байт
-                                        } catch (IOException e) {
-                                            log.debug("unable to get file size for '" + x1filename + "' : " + e.toString());
-                                        }
-
-                                        x1Res = XRepUtil.decodeX1Full(bFile);
-
-                                    } else {
-                                        log.debug("unable to open x1.bin");
-                                        alert = new Alert(Alert.AlertType.ERROR);
-                                        alert.setTitle("Ошибка");
-                                        alert.setHeaderText("Файл полного дневного Х-отчета не найден или не может быть открыт");
-                                        alert.showAndWait();
-                                    }
                                 }
-
-
-                                X5Result x5Res = new X5Result();
-                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getXReport(4, 1, 1)) {
-                                    //ошибка при попытке получения файла Х5-отчета
-                                    log.debug("error while getting X5-report from RRO");
-                                    Alert alertError = new Alert(Alert.AlertType.WARNING);
-                                    alertError.setTitle("Ошибка");
-                                    alertError.setHeaderText("Ошибка при получении отчета по кассирам (Х5-отчета) из РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
-                                    alertError.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
-                                    alertError.showAndWait();
-                                } else {
-                                    //==== разбираем файл отчетов x5.bin
-                                    log.debug("decoding x5.bin");
-
-                                    String x5filename = "x5.bin";
-                                    if ((Files.exists(Paths.get(x5filename))) & (!Files.isDirectory(Paths.get(x5filename))) & (Files.isReadable(Paths.get(x5filename)))) {
-                                        int filesize = 0;
-                                        byte[] bFile = new byte[1];
-                                        try {
-                                            filesize = (int) Files.size(Paths.get(x5filename));
-                                            bFile = new byte[filesize];
-                                            bFile = Files.readAllBytes(Paths.get(x5filename));   //читаем все байты в массив байт
-                                        } catch (IOException e) {
-                                            log.debug("unable to get file size for '" + x5filename + "' : " + e.toString());
-                                        }
-
-                                        x5Res = XRepUtil.decodeX5(bFile);
-
-                                    } else {
-                                        log.debug("unable to open x1.bin");
-                                        alert = new Alert(Alert.AlertType.ERROR);
-                                        alert.setTitle("Ошибка");
-                                        alert.setHeaderText("Файл полного дневного Х-отчета не найден или не может быть открыт");
-                                        alert.showAndWait();
-                                    }
-                                }
-
-
-                                int maxGoods = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getStatusGoodsOccupiedInRRO();
-                                if (maxGoods == 0) {
-                                    maxGoods = 1; //что бы не было ошибки в команде получения Х3 отчета
-                                }
-                                ArrayList<X3Result> x3Res = new ArrayList<X3Result>();
-                                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getXReport(3, 1, maxGoods)) {
-                                    //ошибка при попытке получения файла Х3-отчета
-                                    log.debug("error while getting X3-report from RRO");
-                                    Alert alertError = new Alert(Alert.AlertType.WARNING);
-                                    alertError.setTitle("Ошибка");
-                                    alertError.setHeaderText("Ошибка при получении файла отчета по товарам (Х3-отчета) из РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
-                                    alertError.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
-                                    alertError.showAndWait();
-                                } else {
-                                    //==== разбираем файл отчетов x3.bin
-                                    log.debug("decoding x3.bin");
-
-                                    String x3filename = "x3.bin";
-                                    if ((Files.exists(Paths.get(x3filename))) & (!Files.isDirectory(Paths.get(x3filename))) & (Files.isReadable(Paths.get(x3filename)))) {
-                                        int filesize = 0;
-                                        byte[] bFile = new byte[1];
-                                        try {
-                                            filesize = (int) Files.size(Paths.get(x3filename));
-                                            bFile = new byte[filesize];
-                                            bFile = Files.readAllBytes(Paths.get(x3filename));   //читаем все байты в массив байт
-                                        } catch (IOException e) {
-                                            log.debug("unable to get file size for '" + x3filename + "' : " + e.toString());
-                                        }
-
-                                        x3Res = XRepUtil.decodeX3ToArrayList(bFile);
-
-                                    } else {
-                                        log.debug("unable to open x3.bin");
-                                        alert = new Alert(Alert.AlertType.ERROR);
-                                        alert.setTitle("Ошибка");
-                                        alert.setHeaderText("Файл Х-отчета по товарам не найден или не может быть открыт");
-                                        alert.showAndWait();
-                                    }
-                                }
-
-
-                                if (!XRepUtil.writeToXlsx(x1Res, x5Res, x3Res, folderName, excelFileName, "Х-отчет дневной полный", "Х-отчет по кассирам", "Х-отчет по товарам")) {
-                                    //ошибка при попытке записи Х-отчетов в файл xlsx
-                                    log.debug("error while writing X-reports to xlsx file");
-                                    Alert alertError = new Alert(Alert.AlertType.WARNING);
-                                    alertError.setTitle("Ошибка");
-                                    alertError.setHeaderText("Ошибка при создании xlsx-файла с отчетами");
-                                    alertError.setContentText("Возможные причины: \n- xlsx-файл открыт для редактирования в другой программе \n- xlsx-файл недоступен для записи (диск переполнен)");
-                                    alertError.showAndWait();
-                                }
-
-
-
-
-                                /*
-                                //делаем Z-отчет
-                                alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
-                                alertQuestion.setTitle("Подтверждение");
-                                alertQuestion.setHeaderText("Для корректного выхода из программы необходимо сделать следующие операции:\n1. Печать X-отчета\n" +
-                                        "2. Служебный вынос наличных средств.\n" +
-                                        "3. Печать Z-отчета.\n" +
-                                        "Продолжить процесс выхода?");
-                                Optional<ButtonType> resultRec = alertQuestion.showAndWait();
-                                if (resultRec.isPresent() && resultRec.get() == ButtonType.CANCEL) {
-                                    CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
-                                    log.debug("shift is opened and receipt is closed - recommendations is given to user and user selected to interrupt setExitButton");
-                                    return; //отменяем дальнейшее выполнение метода для кнопки "Выход"
-                                }*/
-
 
                                 break;
                             }
@@ -1216,14 +1160,48 @@ public class MainFormController //implements Initializable
                 windowEvent.consume();
             });
             // Give the controller access to the main app.
-            IncassoFormController IncassoFormController = fxmlLoader.getController();
-            IncassoFormController.setMainApp(mainApp);
+            IncassoFormController incassoFormController = fxmlLoader.getController();
+            incassoFormController.setMainApp(mainApp);
             stage.showAndWait();
 
         } catch (IOException e) {
             log.debug("Ошибка загрузки формы вноса/изъятия " + e.toString());
         }
     }
+
+
+    public void setCashInOutButton(BigDecimal cashToRRO) {
+        //покажем форму вноса/изъятия
+        try {
+            stage = new Stage();
+            String fxmlFormPath = "/fxml/IncassoForm/IncassoForm.fxml";
+            log.debug("Loading IncassoForm for making cash in or out, into new scene");
+            FXMLLoader fxmlLoader = new FXMLLoader();
+            fxmlLoader.setLocation(MainApp.class.getResource(fxmlFormPath));
+            log.debug("Setting location from FXML - IncassoForm");
+            root = fxmlLoader.load();
+            log.debug("Отображаем форму вноса/изъятия");
+            stage.setScene(new Scene(root, 800, 500));
+            //stage.initStyle(StageStyle.UNDECORATED);
+            stage.setTitle("Служебный внос / изъятие");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setResizable(false);
+            stage.initOwner(btnCashInOut.getScene().getWindow());
+            stage.initStyle(StageStyle.UTILITY);
+            stage.setOnCloseRequest(windowEvent -> {
+                windowEvent.consume();
+            });
+            // Give the controller access to the main app.
+            IncassoFormController incassoFormController = fxmlLoader.getController();
+            incassoFormController.setMainApp(mainApp);
+            incassoFormController.setTxtValue(cashToRRO.toString());
+            stage.showAndWait();
+
+        } catch (IOException e) {
+            log.debug("Ошибка загрузки формы вноса/изъятия " + e.toString());
+        }
+    }
+
 
     public void setEmptyReceiptButton() {
         if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openPortMiniFP()) {
@@ -1304,6 +1282,186 @@ public class MainFormController //implements Initializable
         }
         CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
 
+    }
+
+
+    /**
+     * сохранение в файл информации о суммах (наличкой и по кредитным картам) в РРО
+     * @param cash наличка в РРО
+     * @param cc деньги по кредитным картам в РРО
+     * @return success or not
+     */
+
+    private boolean saveCashFromRROToFile(BigDecimal cash, BigDecimal cc) {
+        try {
+            String cashFileName = "rrocash.lck";
+            log.debug("putting current summ (cash & cc) from RRO into rrocash.lck");
+            if (Files.exists(Paths.get(cashFileName))) {
+                Files.delete(Paths.get(cashFileName));
+            }
+            Files.createFile(Paths.get(cashFileName));
+            if (Files.isWritable(Paths.get(cashFileName))) {
+                String str = cash.toString()+"\n"+cc.toString();
+                Files.write(Paths.get(cashFileName), str.getBytes());
+            }
+            return true;
+        } catch (IOException e) {
+            log.debug("error putting cash and cc from RRO into rrocash.lck " + e.toString());
+            return false;
+        }
+    }
+
+
+    /**
+     * Формирование задачи сохранения данных по отчетам из принтера в файл
+     * @param folderName         имя папки сохранения
+     * @param excelFileName      имя файла
+     * @return                   возвращает задачу для выполнения в отдельном потоке
+     */
+    private Task<Void> saveXreports(String folderName, String excelFileName) {
+        //задача сохранения Х отчетов
+        return new Task<Void>() {
+            @Override
+            public Void call() {
+
+
+                X1FullResult x1Res = new X1FullResult();
+                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getXReport(0, 1, 1)) {
+                    //ошибка при попытке получения файла Х1-отчета
+                    log.debug("error while getting X1-report from RRO");
+                    Alert alertError = new Alert(Alert.AlertType.WARNING);
+                    alertError.setTitle("Ошибка");
+                    alertError.setHeaderText("Ошибка при получении полного дневного отчета (Х1-отчета) из РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                    alertError.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                    alertError.showAndWait();
+                } else {
+                    updateProgress(5, 100);
+
+                    //==== разбираем файл отчетов x1.bin
+                    log.debug("decoding x1.bin");
+
+                    String x1filename = "x1.bin";
+                    if ((Files.exists(Paths.get(x1filename))) & (!Files.isDirectory(Paths.get(x1filename))) & (Files.isReadable(Paths.get(x1filename)))) {
+                        int filesize = 0;
+                        byte[] bFile = new byte[1];
+                        try {
+                            filesize = (int) Files.size(Paths.get(x1filename));
+                            bFile = new byte[filesize];
+                            bFile = Files.readAllBytes(Paths.get(x1filename));   //читаем все байты в массив байт
+                        } catch (IOException e) {
+                            log.debug("unable to get file size for '" + x1filename + "' : " + e.toString());
+                        }
+
+                        x1Res = XRepUtil.decodeX1Full(bFile);
+
+                    } else {
+                        log.debug("unable to open x1.bin");
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Ошибка");
+                        alert.setHeaderText("Файл полного дневного Х-отчета не найден или не может быть открыт");
+                        alert.showAndWait();
+                    }
+                }
+                updateProgress(8, 100);
+
+                X5Result x5Res = new X5Result();
+                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getXReport(4, 1, 1)) {
+                    //ошибка при попытке получения файла Х5-отчета
+                    log.debug("error while getting X5-report from RRO");
+                    Alert alertError = new Alert(Alert.AlertType.WARNING);
+                    alertError.setTitle("Ошибка");
+                    alertError.setHeaderText("Ошибка при получении отчета по кассирам (Х5-отчета) из РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                    alertError.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                    alertError.showAndWait();
+                } else {
+                    updateProgress(64, 100);
+
+                    //==== разбираем файл отчетов x5.bin
+                    log.debug("decoding x5.bin");
+
+                    String x5filename = "x5.bin";
+                    if ((Files.exists(Paths.get(x5filename))) & (!Files.isDirectory(Paths.get(x5filename))) & (Files.isReadable(Paths.get(x5filename)))) {
+                        int filesize = 0;
+                        byte[] bFile = new byte[1];
+                        try {
+                            filesize = (int) Files.size(Paths.get(x5filename));
+                            bFile = new byte[filesize];
+                            bFile = Files.readAllBytes(Paths.get(x5filename));   //читаем все байты в массив байт
+                        } catch (IOException e) {
+                            log.debug("unable to get file size for '" + x5filename + "' : " + e.toString());
+                        }
+
+                        x5Res = XRepUtil.decodeX5(bFile);
+
+                    } else {
+                        log.debug("unable to open x1.bin");
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Ошибка");
+                        alert.setHeaderText("Файл полного дневного Х-отчета не найден или не может быть открыт");
+                        alert.showAndWait();
+                    }
+                }
+
+                int maxGoods = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getStatusGoodsOccupiedInRRO();
+                if (maxGoods == 0) {
+                    maxGoods = 1; //что бы не было ошибки в команде получения Х3 отчета
+                }
+                updateProgress(69, 100);
+
+                ArrayList<X3Result> x3Res = new ArrayList<X3Result>();
+                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getXReport(3, 1, maxGoods)) {
+                    //ошибка при попытке получения файла Х3-отчета
+                    log.debug("error while getting X3-report from RRO");
+                    Alert alertError = new Alert(Alert.AlertType.WARNING);
+                    alertError.setTitle("Ошибка");
+                    alertError.setHeaderText("Ошибка при получении файла отчета по товарам (Х3-отчета) из РРО\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                    alertError.setContentText("Служебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                    alertError.showAndWait();
+                } else {
+                    updateProgress(81, 100);
+
+                    //==== разбираем файл отчетов x3.bin
+                    log.debug("decoding x3.bin");
+
+                    String x3filename = "x3.bin";
+                    if ((Files.exists(Paths.get(x3filename))) & (!Files.isDirectory(Paths.get(x3filename))) & (Files.isReadable(Paths.get(x3filename)))) {
+                        int filesize = 0;
+                        byte[] bFile = new byte[1];
+                        try {
+                            filesize = (int) Files.size(Paths.get(x3filename));
+                            bFile = new byte[filesize];
+                            bFile = Files.readAllBytes(Paths.get(x3filename));   //читаем все байты в массив байт
+                        } catch (IOException e) {
+                            log.debug("unable to get file size for '" + x3filename + "' : " + e.toString());
+                        }
+
+                        x3Res = XRepUtil.decodeX3ToArrayList(bFile);
+
+                    } else {
+                        log.debug("unable to open x3.bin");
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Ошибка");
+                        alert.setHeaderText("Файл Х-отчета по товарам не найден или не может быть открыт");
+                        alert.showAndWait();
+                    }
+                }
+                updateProgress(85, 100);
+
+                if (!XRepUtil.writeToXlsx(x1Res, x5Res, x3Res, folderName, excelFileName, "Х-отчет дневной полный", "Х-отчет по кассирам", "Х-отчет по товарам")) {
+                    //ошибка при попытке записи Х-отчетов в файл xlsx
+                    log.debug("error while writing X-reports to xlsx file");
+                    Alert alertError = new Alert(Alert.AlertType.WARNING);
+                    alertError.setTitle("Ошибка");
+                    alertError.setHeaderText("Ошибка при создании xlsx-файла с отчетами");
+                    alertError.setContentText("Возможные причины: \n- xlsx-файл открыт для редактирования в другой программе \n- xlsx-файл недоступен для записи (диск переполнен)");
+                    alertError.showAndWait();
+                }
+                updateProgress(100, 100);
+
+                return null;
+            }
+
+        };
     }
 
 }
