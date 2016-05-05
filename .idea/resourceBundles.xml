@@ -10,6 +10,9 @@
     <file url="file://$PROJECT_DIR$/src/main/resources/fxml/MainForm/MainForm_en.properties" />
     <file url="file://$PROJECT_DIR$/src/main/resources/fxml/MainForm/MainForm_ru.properties" />
     <file url="file://$PROJECT_DIR$/src/main/resources/fxml/MainForm/MainForm_ua.properties" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/fxml/OrderForm/OrderForm_en.properties" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/fxml/OrderForm/OrderForm_ru.properties" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/fxml/OrderForm/OrderForm_ua.properties" />
     <custom-resource-bundle>
       <file value="file://$PROJECT_DIR$/src/main/resources/fxml/LoginForm/LoginForm_en.properties" />
       <file value="file://$PROJECT_DIR$/src/main/resources/fxml/LoginForm/LoginForm_ru.properties" />
@@ -27,6 +30,12 @@
       <file value="file://$PROJECT_DIR$/src/main/resources/fxml/GoodsForm/GoodsForm_ru.properties" />
       <file value="file://$PROJECT_DIR$/src/main/resources/fxml/GoodsForm/GoodsForm_ua.properties" />
       <base-name>GoodsForm</base-name>
+    </custom-resource-bundle>
+    <custom-resource-bundle>
+      <file value="file://$PROJECT_DIR$/src/main/resources/fxml/OrderForm/OrderForm_en.properties" />
+      <file value="file://$PROJECT_DIR$/src/main/resources/fxml/OrderForm/OrderForm_ru.properties" />
+      <file value="file://$PROJECT_DIR$/src/main/resources/fxml/OrderForm/OrderForm_ua.properties" />
+      <base-name>OrderForm</base-name>
     </custom-resource-bundle>
   </component>
 </project>
