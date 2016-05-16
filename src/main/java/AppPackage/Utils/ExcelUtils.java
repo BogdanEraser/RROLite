@@ -118,7 +118,7 @@ public class ExcelUtils {
                 String fileExtension = excelFilePath.substring(excelFilePath.indexOf("."));
                 if (fileExtension.equals(".xls")) {
                     workbook = new HSSFWorkbook(new POIFSFileSystem(fileInputStream));
-                } else if (fileExtension.equals(".xlsx")) {
+                } else if (fileExtension.equals(".xlsx") || fileExtension.equals(".xlsm")) {
                     workbook = new XSSFWorkbook(fileInputStream);
                 } else {
                     log.debug("File " + excelFilePath + " cannot be open (may be not excel file format)");
@@ -378,7 +378,7 @@ public class ExcelUtils {
             if (fileExtension.equals(".xls")) {
                 workbook = new HSSFWorkbook();
 
-            } else if (fileExtension.equals(".xlsx")) {
+            } else if (fileExtension.equals(".xlsx") || fileExtension.equals(".xlsm")) {
                 workbook = new XSSFWorkbook();
 
             } else {
