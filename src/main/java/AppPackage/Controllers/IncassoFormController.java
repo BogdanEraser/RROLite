@@ -10,7 +10,10 @@ import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -245,7 +248,7 @@ public class IncassoFormController //implements Initializable
                 if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openPortMiniFP()) {
                     //проверим, в каком состоянии чек
                     switch (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getReceiptStatusFromRRO()) {
-                        case 0: {//чек закрыт, открываем его
+                        case 0: {//чек закрыт
                             BigDecimal summ = new BigDecimal(txtValue.getText().replace(",", ".")).setScale(2, BigDecimal.ROUND_HALF_EVEN);
                             if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).cashInOut(0, summ)) {
                                 //внос денег неуспешный
@@ -259,6 +262,17 @@ public class IncassoFormController //implements Initializable
                                 return; //отменяем дальнейшее выполнение метода для кнопки "внос"
                             }
                             MainApp.setCashSumInRRO("Наличными: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCashInRRO().toString());
+                            //удаление файла с данными о сумме вноса, что бы не повторялся внос
+                            String cashFileName = "rrocash.lck";
+                            log.debug("deleting rrocash.lck (cause cash was successfully inputted to RRO");
+                            if (Files.exists(Paths.get(cashFileName))) {
+                                try {
+                                    Files.delete(Paths.get(cashFileName));
+                                } catch (IOException e) {
+                                    log.debug("error while deleting " + cashFileName + ": " + e.toString());
+                                }
+                            }
+
                             break;
                         }
                         case 1: {//чек открыт для продажи
