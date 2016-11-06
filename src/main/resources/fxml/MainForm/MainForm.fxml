@@ -149,6 +149,11 @@
                   <Font name="Verdana" size="22.0" />
                </font>
             </Button>
+            <Button fx:id="btnXReport" alignment="BASELINE_CENTER" mnemonicParsing="false" onAction="#setXReportButton" prefHeight="80.0" prefWidth="240.0" text="X-отчет" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" GridPane.columnIndex="2" GridPane.rowIndex="2">
+               <font>
+                  <Font name="Verdana" size="22.0" />
+               </font>
+            </Button>
          </children>
       </GridPane>
    </center>

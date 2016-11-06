@@ -79,6 +79,8 @@ public class MainFormController //implements Initializable
     @FXML
     private Button btnZReport;
     @FXML
+    private Button btnXReport;
+    @FXML
     private Button btnEmptyReceipt;
 
 
@@ -716,8 +718,9 @@ public class MainFormController //implements Initializable
                                 currentProgress++;
                                 updateProgress(currentProgress, maxProgress);
                                 try {
-                                    Thread.sleep(50);
+                                    Thread.sleep(30);
                                     Thread.yield();
+                                    Thread.sleep(30);
                                 } catch (InterruptedException e) {
                                     log.debug("thread 'add_plu' interrupted " + e.toString());
                                 }
@@ -1114,6 +1117,43 @@ public class MainFormController //implements Initializable
     }
 
 
+    public void setXReportButton() {
+        Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
+        alertQuestion.initOwner(mainApp.getMainStage());
+        alertQuestion.setTitle("Подтверждение");
+        alertQuestion.setHeaderText("Сделать X-отчет?");
+        Optional<ButtonType> result = alertQuestion.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openPortMiniFP()) {
+                //пробуем сделать X-отчет
+                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).execXReport()) {
+                    //ошибка при выполнении X-отчета
+                    log.debug("unable to execute X-report");
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Ошибка");
+                    alert.setHeaderText("Ошибка при выполнениие X-отчета\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                    alert.setContentText("Рекомендуется обратиться к администратору\nСлужебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                    alert.showAndWait();
+                }
+                MainApp.rootLayout.setCenter(LoginFormController.getRootPane());
+                //сохранение сумм из РРО в файл
+                BigDecimal cash = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCashInRRO();
+                BigDecimal cc = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCreditInRRO();
+                if (!saveCashFromRROToFile(cash, cc)) {
+                    //сохранение сумм прошло неуспешно
+                    Alert alertSave = new Alert(Alert.AlertType.ERROR);
+                    alertSave.setTitle("Ошибка");
+                    alertSave.setHeaderText("Ошибка сохранения суммы из РРО в файл\nРекомендуется записать вручную для последующего вноса в РРО");
+                    alertSave.setContentText("Сумма наличными: "+cash.toString());
+                    alertSave.showAndWait();
+                }
+
+            }
+            CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
+        }
+    }
+
+
     public void setZReportButton() {
         Alert alertQuestion = new Alert(Alert.AlertType.CONFIRMATION);
         alertQuestion.initOwner(mainApp.getMainStage());
@@ -1137,6 +1177,7 @@ public class MainFormController //implements Initializable
             CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
         }
     }
+
 
     public void setCashInOutButton() {
         //покажем форму вноса/изъятия
