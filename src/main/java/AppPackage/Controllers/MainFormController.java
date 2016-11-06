@@ -1136,7 +1136,7 @@ public class MainFormController //implements Initializable
                     alert.setContentText("Рекомендуется обратиться к администратору\nСлужебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
                     alert.showAndWait();
                 }
-                MainApp.rootLayout.setCenter(LoginFormController.getRootPane());
+                //MainApp.rootLayout.setCenter(LoginFormController.getRootPane());
                 //сохранение сумм из РРО в файл
                 BigDecimal cash = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCashInRRO();
                 BigDecimal cc = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCreditInRRO();
