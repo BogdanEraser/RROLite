@@ -1151,17 +1151,6 @@ public class MainFormController //implements Initializable
         Optional<ButtonType> result = alertQuestion.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             if (CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).openPortMiniFP()) {
-                //пробуем сделать Z-отчет
-                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).execZReport()) {
-                    //ошибка при выполнении Z-отчета
-                    log.debug("unable to execute Z-report");
-                    Alert alert = new Alert(Alert.AlertType.WARNING);
-                    alert.setTitle("Ошибка");
-                    alert.setHeaderText("Ошибка при выполнениие дневного Z-отчета c обнулением\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
-                    alert.setContentText("Рекомендуется обратиться к администратору\nСлужебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
-                    alert.showAndWait();
-                }
-                MainApp.rootLayout.setCenter(LoginFormController.getRootPane());
                 //сохранение сумм из РРО в файл
                 BigDecimal cash = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCashInRRO();
                 BigDecimal cc = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCreditInRRO();
@@ -1173,6 +1162,18 @@ public class MainFormController //implements Initializable
                     alertSave.setContentText("Сумма наличными: "+cash.toString());
                     alertSave.showAndWait();
                 }
+                //а теперь пробуем сделать Z-отчет
+                if (!CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).execZReport()) {
+                    //ошибка при выполнении Z-отчета
+                    log.debug("unable to execute Z-report");
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Ошибка");
+                    alert.setHeaderText("Ошибка при выполнениие дневного Z-отчета c обнулением\nОписание ошибки: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).errorCodesHashMap.get(CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastError()));
+                    alert.setContentText("Рекомендуется обратиться к администратору\nСлужебная информация: " + CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getLastResult());
+                    alert.showAndWait();
+                }
+                MainApp.rootLayout.setCenter(LoginFormController.getRootPane());
+
             }
             CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
         }
