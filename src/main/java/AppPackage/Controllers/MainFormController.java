@@ -332,7 +332,8 @@ public class MainFormController //implements Initializable
                         break;
                     case Cell.CELL_TYPE_STRING:
                         if (cell.getStringCellValue().length() > 0) {
-                            if (cell.getStringCellValue() != "0") {
+                            //if (cell.getStringCellValue() != "0") {
+                            if (!cell.getStringCellValue().equals("0")) {
                                 try {
                                     mainApp.allGoodsGroupsArrayList.add(new GoodsGroup((int) r.getCell(0, Row.RETURN_BLANK_AS_NULL).getNumericCellValue(), cell.getStringCellValue()));
                                 } catch (IllegalStateException e) {
@@ -963,7 +964,7 @@ public class MainFormController //implements Initializable
 
 
                                 Task task = saveXreports(folderName, excelFileName);
-                                Thread saveXreportThread = null;
+                                Thread saveXreportThread;
                                 saveXreportThread = new Thread(task);
                                 progressIndicator.progressProperty().bind(task.progressProperty());
                                 lblProgress.setText("Сохранение Х-отчетов в файл");
@@ -1197,9 +1198,7 @@ public class MainFormController //implements Initializable
             stage.setResizable(false);
             stage.initOwner(btnCashInOut.getScene().getWindow());
             stage.initStyle(StageStyle.UTILITY);
-            stage.setOnCloseRequest(windowEvent -> {
-                windowEvent.consume();
-            });
+            stage.setOnCloseRequest(windowEvent -> windowEvent.consume());
             // Give the controller access to the main app.
             IncassoFormController incassoFormController = fxmlLoader.getController();
             incassoFormController.setMainApp(mainApp);
@@ -1229,9 +1228,7 @@ public class MainFormController //implements Initializable
             stage.setResizable(false);
             stage.initOwner(btnCashInOut.getScene().getWindow());
             stage.initStyle(StageStyle.UTILITY);
-            stage.setOnCloseRequest(windowEvent -> {
-                windowEvent.consume();
-            });
+            stage.setOnCloseRequest(windowEvent -> windowEvent.consume());
             // Give the controller access to the main app.
             IncassoFormController incassoFormController = fxmlLoader.getController();
             incassoFormController.setMainApp(mainApp);
@@ -1383,7 +1380,7 @@ public class MainFormController //implements Initializable
 
                     String x1filename = "x1.bin";
                     if ((Files.exists(Paths.get(x1filename))) & (!Files.isDirectory(Paths.get(x1filename))) & (Files.isReadable(Paths.get(x1filename)))) {
-                        int filesize = 0;
+                        int filesize;
                         byte[] bFile = new byte[1];
                         try {
                             filesize = (int) Files.size(Paths.get(x1filename));
@@ -1422,7 +1419,7 @@ public class MainFormController //implements Initializable
 
                     String x5filename = "x5.bin";
                     if ((Files.exists(Paths.get(x5filename))) & (!Files.isDirectory(Paths.get(x5filename))) & (Files.isReadable(Paths.get(x5filename)))) {
-                        int filesize = 0;
+                        int filesize;
                         byte[] bFile = new byte[1];
                         try {
                             filesize = (int) Files.size(Paths.get(x5filename));
@@ -1466,7 +1463,7 @@ public class MainFormController //implements Initializable
 
                     String x3filename = "x3.bin";
                     if ((Files.exists(Paths.get(x3filename))) & (!Files.isDirectory(Paths.get(x3filename))) & (Files.isReadable(Paths.get(x3filename)))) {
-                        int filesize = 0;
+                        int filesize;
                         byte[] bFile = new byte[1];
                         try {
                             filesize = (int) Files.size(Paths.get(x3filename));
