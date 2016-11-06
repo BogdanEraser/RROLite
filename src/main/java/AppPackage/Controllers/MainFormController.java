@@ -1137,18 +1137,6 @@ public class MainFormController //implements Initializable
                     alert.showAndWait();
                 }
                 //MainApp.rootLayout.setCenter(LoginFormController.getRootPane());
-                //сохранение сумм из РРО в файл
-                BigDecimal cash = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCashInRRO();
-                BigDecimal cc = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCreditInRRO();
-                if (!saveCashFromRROToFile(cash, cc)) {
-                    //сохранение сумм прошло неуспешно
-                    Alert alertSave = new Alert(Alert.AlertType.ERROR);
-                    alertSave.setTitle("Ошибка");
-                    alertSave.setHeaderText("Ошибка сохранения суммы из РРО в файл\nРекомендуется записать вручную для последующего вноса в РРО");
-                    alertSave.setContentText("Сумма наличными: "+cash.toString());
-                    alertSave.showAndWait();
-                }
-
             }
             CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
         }
@@ -1174,6 +1162,17 @@ public class MainFormController //implements Initializable
                     alert.showAndWait();
                 }
                 MainApp.rootLayout.setCenter(LoginFormController.getRootPane());
+                //сохранение сумм из РРО в файл
+                BigDecimal cash = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCashInRRO();
+                BigDecimal cc = CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).getCreditInRRO();
+                if (!saveCashFromRROToFile(cash, cc)) {
+                    //сохранение сумм прошло неуспешно
+                    Alert alertSave = new Alert(Alert.AlertType.ERROR);
+                    alertSave.setTitle("Ошибка");
+                    alertSave.setHeaderText("Ошибка сохранения суммы из РРО в файл\nРекомендуется записать вручную для последующего вноса в РРО");
+                    alertSave.setContentText("Сумма наличными: "+cash.toString());
+                    alertSave.showAndWait();
+                }
             }
             CurrentRRO.getInstance(MainApp.getPrinterType(), String.valueOf(MainApp.getPrinterPort()), String.valueOf(MainApp.getPrinterPortSpeed())).closePortMiniFP();
         }
